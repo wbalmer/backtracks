@@ -1,2 +1,3 @@
 *.ipynb*
 bgstar_emcee.py
+__pycache__

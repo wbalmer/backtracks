@@ -1,0 +1,33 @@
+# backtrack utility functions. stand on the shoulders of giants, its fun!
+
+# imports
+import orbitize
+import orbitize.system
+import numpy as np
+from scipy.stats import norm
+import novas.compat as novas
+from novas.compat.eph_manager import ephem_open
+from astropy.coordinates import SkyCoord, Angle
+
+
+def pol2car(sep, pa, seperr, paerr, corr=np.nan):
+    ra, dec = orbitize.system.seppa2radec(sep, pa)
+    raerr, decerr, corr2 = orbitize.system.transform_errors(sep, pa, seperr, paerr, corr, orbitize.system.seppa2radec)
+    return ra, dec, decerr, raerr, corr2
+
+
+def transform_uniform(x,a,b):
+    return a + (b-a)*x
+
+
+def transform_normal(x, mu, sigma):
+    return norm.ppf(x, loc=mu, scale=sigma)
+
+
+plx_pdf = lambda par,L : (par**(-4))*np.exp(-1/(par*L))
+
+from scipy.special import gammaincc, gammainccinv
+
+plx_cdf = lambda par,L : gammaincc(3, 1/(L*par))*L**3
+
+plx_ppf = lambda x,L : gammainccinv(3, (x/(L**3)))/L
