@@ -110,9 +110,10 @@ def trackplot(backtrack, daysback=2600, daysforward=1200, fileprefix='./'):
     times0=Time(backtrack.epochs,format='jd')
 
     flat_samples = backtrack.results.samples
-    sel = np.random.choice(np.arange(np.shape(flat_samples)[0]),10)
-    pars = flat_samples[sel,:]
+    # sel = np.random.choice(np.arange(np.shape(flat_samples)[0]),10)
+    # pars = flat_samples[sel,:]
     best_pars = np.array(backtrack.run_median).T[0]
+    pars = np.array(backtrack.run_quant).T
 
     corr_terms=~np.isnan(backtrack.rho) # corr_terms is everywhere where rho is not a nan.
 
@@ -142,23 +143,15 @@ def trackplot(backtrack, daysback=2600, daysforward=1200, fileprefix='./'):
         compdec = (backtrack.decs[~corr_terms][i],decbg[~corr_terms][i])
         axs['A'].plot(compra,compdec,color='xkcd:pink', alpha=0.5)
 
-    for i in np.arange(10): # for 10 randomly drawn parameter combinations
-        rasbg,decbg = backtrack.radecdists(epochs2,pars[i,0],pars[i,1],pars[i,2],pars[i,3],pars[i,4]) # retrieve coordinates at full range of epochs
+    i = 0
+    rasbg_q1,decbg_q1 = backtrack.radecdists(epochs2,pars[i,0],pars[i,1],pars[i,2],pars[i,3],pars[i,4]) # retrieve coordinates at full range of epochs
+    i = 1
+    rasbg_q2,decbg_q2 = backtrack.radecdists(epochs2,pars[i,0],pars[i,1],pars[i,2],pars[i,3],pars[i,4]) # retrieve coordinates at full range of epochs
 
-        axs['B'].plot(times.decimalyear,orbitize.system.radec2seppa(rasbg,decbg)[0],color='blue',alpha=0.3, zorder=0)
-        axs['C'].plot(times.decimalyear,orbitize.system.radec2seppa(rasbg,decbg)[1],color='blue',alpha=0.3, zorder=0)
+    axs['B'].fill_between(times.decimalyear,orbitize.system.radec2seppa(rasbg_q1,decbg_q1)[0], y2=orbitize.system.radec2seppa(rasbg_q1,decbg_q1)[0], color='blue',alpha=0.5, zorder=0)
+    axs['C'].fill_between(times.decimalyear,orbitize.system.radec2seppa(rasbg_q1,decbg_q1)[1], y2=orbitize.system.radec2seppa(rasbg_q1,decbg_q1)[1], color='blue',alpha=0.5, zorder=0)
 
-        if i==0:
-            axs['A'].plot(rasbg,decbg,color="blue",label="model",alpha=0.3, zorder=0)
-        else:
-            axs['A'].plot(rasbg,decbg,color="blue",alpha=0.3, zorder=0)
-
-        rasbg,decbg = backtrack.radecdists(backtrack.epochs,pars[i,0],pars[i,1],pars[i,2],pars[i,3],pars[i,4]) # retrieve coordinates at observing epochs
-
-        if i==0:
-            axs['A'].plot(rasbg,decbg,color="red",label="model @ epochs",alpha=1,linestyle="",marker=".",zorder=4)
-        else:
-            axs['A'].plot(rasbg,decbg,color="red",alpha=1,linestyle="",marker=".",zorder=4)
+    axs['A'].fill(np.append(rasbg_q1, rasbg_q2[::-1]), np.append(decbg_q1, decbg_q2[::-1]), color="blue",label="model 1-sigma",alpha=0.5, zorder=0)
 
     # plot data in deltaRA, deltaDEC plot
     axs['A'].errorbar(backtrack.ras[~corr_terms],backtrack.decs[~corr_terms],yerr=backtrack.decserr[~corr_terms],xerr=backtrack.raserr[~corr_terms],

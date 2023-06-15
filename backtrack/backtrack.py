@@ -223,12 +223,11 @@ class backtrack():
         chi2 likelihood function.
         """
 
-        xs,ys = self.fmodel(theta)
+        if np.isnan(np.sum(theta)) or np.isinf(np.sum(theta)):
+            # if nan or inf, avoid calling fmodel
+            return -np.inf
 
-        if np.isnan(np.sum(theta)):
-            return -np.inf
-        if theta[-1] < 1e-1:
-            return -np.inf
+        xs,ys = self.fmodel(theta)
 
         # separate terms where there is a correlation
         corr_terms = ~np.isnan(self.rho)
@@ -260,13 +259,16 @@ class backtrack():
         theta = np.array(u) # copy u
         if len(theta) == 5:
             ra, dec, pmra, pmdec, par = theta # unpacking parameters
+
             # par prior
-            # par *= self.par0
             L_d = 1.35e3 # length scale value from astraatmadja+ 2016
-            L = (1/L_d)*1000
-            par = plx_pdf(par, L)
-            # this is the PPF, not the PDF of Bailer-Jones 2015 eq. 17
-            # par = plx_ppf(par, L) # ?????????????? i dont get it
+            L = (1/L_d)*1000 # convert length scale to parallax in mas
+            par /= L
+            # the PPF of Bailer-Jones 2015 eq. 17
+            par = plx_ppf(par, L)
+            # truncate distribution at 10 kpc (Nielsen+ 2017 does this)
+            if par < 1e-1:
+                par = -np.inf
 
         else:
             ra, dec, pmra, pmdec = theta
@@ -310,6 +312,9 @@ class backtrack():
         mean, cov = dyfunc.mean_and_cov(samples, weights)
 
         self.run_median = [dyfunc.quantile(samps, [0.5], weights=weights)
+                     for samps in samples.T]
+
+        self.run_quant = [dyfunc.quantile(samps, [0.32, 0.68], weights=weights)
                      for samps in samples.T]
 
         # Resample weighted samples.
