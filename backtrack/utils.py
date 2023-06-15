@@ -5,6 +5,7 @@ import orbitize
 import orbitize.system
 import numpy as np
 from scipy.stats import norm
+from scipy.special import gammainc, gammaincc, gammainccinv, gammaincinv
 import novas.compat as novas
 from novas.compat.eph_manager import ephem_open
 from astropy.coordinates import SkyCoord, Angle
@@ -24,10 +25,12 @@ def transform_normal(x, mu, sigma):
     return norm.ppf(x, loc=mu, scale=sigma)
 
 
-plx_pdf = lambda par,L : (par**(-4))*np.exp(-1/(par*L))
+def transform_gengamm(x, L=1.35e3, alpha=1, beta=2):
+    return L*(gammaincinv((beta+1)/alpha,x)**(1/alpha))
 
-from scipy.special import gammaincc, gammainccinv
 
-plx_cdf = lambda par,L : gammaincc(3, 1/(L*par))*L**3
-
-plx_ppf = lambda x,L : gammainccinv(3, (x/(L**3)))/L
+# plx_pdf = lambda par,L : (par**(-4))*np.exp(-1/(par*L))
+#
+# plx_cdf = lambda par,L : gammaincc(3, 1/(L*par))*L**3
+#
+# plx_ppf = lambda x,L : gammainccinv(3, (x/(L**3)))/L

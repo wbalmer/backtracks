@@ -261,13 +261,13 @@ class backtrack():
             ra, dec, pmra, pmdec, par = theta # unpacking parameters
 
             # par prior
-            L_d = 1.35e3 # length scale value from astraatmadja+ 2016
-            L = (1/L_d)*1000 # convert length scale to parallax in mas
-            par /= L
+            L = 1.35e3 # length scale value from astraatmadja+ 2016
+            alpha = 1
+            beta = 2
             # the PPF of Bailer-Jones 2015 eq. 17
-            par = plx_ppf(par, L)
-            # truncate distribution at 10 kpc (Nielsen+ 2017 does this)
-            if par < 1e-1:
+            par = 1000/transform_gengamm(par, L, alpha, beta) # [units of mas]
+            # truncate distribution at 100 kpc (Nielsen+ 2017 do this at 10 kpc)
+            if par < 1e-2:
                 par = -np.inf
 
         else:
