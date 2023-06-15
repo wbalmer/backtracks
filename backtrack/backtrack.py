@@ -183,6 +183,15 @@ class backtrack():
         self.mu_par = np.ma.median(nearby['parallax'].data)
         self.sigma_par = np.ma.std(nearby['parallax'].data)
         print('[BACKTRACK INFO]: Finished nearby background gaia statistics')
+
+        # query Bailer-Jones distance parameters
+        healpix = np.floor(self.gaia_id / 562949953421312 )
+        distance_prior_params = pd.read_csv('bailer-jones_edr3_prior_summary.csv')
+        distance_prior_params = distance_prior_params[distance_prior_params['healpix']==healpix]
+        self.L = distance_prior_params['GGDrlen'].values[0]
+        self.alpha = distance_prior_params['GGDalpha'].values[0]
+        self.beta = distance_prior_params['GGDbeta'].values[0]
+        print('[BACKTRACK INFO]: Queried distance prior parameters, L={}, alpha={}, beta={}'.format(self.L, self.alpha, self.beta))
         # return table of nearby objects
         return nearby
 
@@ -261,9 +270,9 @@ class backtrack():
             ra, dec, pmra, pmdec, par = theta # unpacking parameters
 
             # par prior
-            L = 1.35e3 # length scale value from astraatmadja+ 2016
-            alpha = 1
-            beta = 2
+            L = self.L # 1.35e3 length scale value from astraatmadja+ 2016
+            alpha = self.alpha # 1
+            beta = self.alpha # 2
             # the PPF of Bailer-Jones 2015 eq. 17
             par = 1000/transform_gengamm(par, L, alpha, beta) # [units of mas]
             # truncate distribution at 100 kpc (Nielsen+ 2017 do this at 10 kpc)
@@ -330,6 +339,7 @@ class backtrack():
         """
         """
         diagnos = diagnostic(self)
+        plx_prior(self)
         post = posterior(self)
         tracks = trackplot(self,daysback=daysback,daysforward=daysforward)
         hood = neighborhood(self)

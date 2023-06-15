@@ -60,6 +60,23 @@ def diagnostic(backtrack, fileprefix='./'):
     plt.savefig(fileprefix+'{}_evidence_bgstar.png'.format(backtrack.target_name.replace(' ','_')), dpi=300, bbox_inches='tight')
     return fig
 
+
+def plx_prior(backtrack, fileprefix='./'):
+    beta = backtrack.beta
+    alpha = backtrack.alpha
+    L = backtrack.L
+
+    plt.figure(facecolor='white')
+    u = np.arange(0.,1,0.001)
+    plt.plot(u, 1000/transform_gengamm(u, L, alpha, beta), label=r'$\alpha=${}, $\beta=${}, L={}'.format(alpha, beta, L))
+    plt.xlabel('u')
+    plt.ylabel('PPF(p(u))')
+    plt.legend()
+    plt.savefig(fileprefix+"{}_bjprior_bgstar.png".format(backtrack.target_name.replace(' ','_')),dpi=300, bbox_inches='tight')
+
+    return
+
+
 def posterior(backtrack, fileprefix='./'):
     labels = ["RA (deg, ep=2016)","DEC (deg, ep=2016)","pmra (mas/yr)","pmdec (mas/yr)","parallax (mas)"]
     # plot extended run (right)
@@ -89,7 +106,7 @@ def posterior(backtrack, fileprefix='./'):
     for axis_col in ax[:,-1]:
         axis_col.xaxis.set_major_formatter(tick_formatter)
     ax[-1,-1].set_xscale('log')
-    ax[-1,-1].set_xlim(1e-1, 1e1)
+    # ax[-1,-1].set_xlim(xmin=1e-2)
 
     plt.savefig(fileprefix+"{}_corner_bgstar.png".format(backtrack.target_name.replace(' ','_')),dpi=300, bbox_inches='tight')
 
