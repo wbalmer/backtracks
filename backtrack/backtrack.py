@@ -14,6 +14,7 @@ import os
 import orbitize
 import orbitize.system
 import pandas as pd
+import pickle
 
 # sampling
 import dynesty
@@ -67,9 +68,14 @@ class backtrack():
     """
     """
 
-    def __init__(self,target_name, candidate_file, nearby_window=0.5, **kwargs):
+    def __init__(self,target_name, candidate_file, nearby_window=0.5, jd_tt=(2022, 3, 20, 12.), **kwargs):
         self.target_name = target_name
         self.candidate_file = candidate_file
+
+        if 'unif' in kwargs:
+            self.unif = kwargs['unif']
+        else:
+            self.unif = 5e-3
 
         # planet candidate astrometry
         candidate = pd.read_csv(candidate_file)
@@ -109,7 +115,7 @@ class backtrack():
         self.par0 = self.paro/10 # mas
         self.radvel0 = 0 # km/s
 
-        self.jd_tt = novas.julian_date(2022, 3, 20, 12.0) # date used as starting data for plots
+        self.jd_tt = novas.julian_date(jd_tt[0], jd_tt[1], jd_tt[2], jd_tt[3]) # date used as starting data for plots
         print('[BACKTRACK INFO]: JD_TT set')
         jd_start, jd_end, number = ephem_open()
         print('[BACKTRACK INFO]: Opened ephemrids file')
@@ -281,16 +287,11 @@ class backtrack():
 
         else:
             ra, dec, pmra, pmdec = theta
+        unifpos = self.unif
         # uniform ra prior
-        ra = transform_uniform(ra, self.ra0-5e-3, self.ra0+5e-3)
+        ra = transform_uniform(ra, self.ra0-unifpos, self.ra0+unifpos)
         # uniform dec prior
-        dec = transform_uniform(dec, self.dec0-5e-3, self.dec0+5e-3)
-        # uniform pmra prior
-        # pmra = 2. * pmra - 1.
-        # pmra *= 100
-        # # uniform pmdec prior
-        # pmdec = 2. * pmdec - 1.
-        # pmdec *= 100
+        dec = transform_uniform(dec, self.dec0-unifpos, self.dec0+unifpos)
 
         pmra = transform_normal(pmra, self.mu_pmra, self.sigma_pmra)
         pmdec = transform_normal(pmdec, self.mu_pmdec, self.sigma_pmdec)
@@ -301,14 +302,19 @@ class backtrack():
             theta = ra,dec,pmra,pmdec
         return theta
 
-    def fit(self,npool=4):
+    def fit(self,dlogz=0.01,npool=4,dynamic=True):
         """
         """
         print('[BACKTRACK INFO]: Beginning sampling, I hope')
         with dynesty.pool.Pool(npool, self.loglike, self.prior_transform) as pool: #where sampler is first created
-            dsampler = dynesty.DynamicNestedSampler(pool.loglike, pool.prior_transform,
-                                                    5, pool=pool)
-            dsampler.run_nested()
+            if dynamic:
+                dsampler = dynesty.DynamicNestedSampler(pool.loglike, pool.prior_transform,
+                                                        5, pool=pool)
+                dsampler.run_nested(dlogz_init=dlogz)
+            else:
+                dsampler = dynesty.NestedSampler(pool.loglike, pool.prior_transform,
+                                                        5, pool=pool, nlive=1000)
+                dsampler.run_nested(dlogz=dlogz)
             results = dsampler.results
 
         from dynesty import utils as dyfunc
@@ -334,6 +340,21 @@ class backtrack():
 
         self.results = results_sim
         return results_sim
+
+
+    def save_results(self, fileprefix='./'):
+        save_dict = {'med':self.run_median, 'quant':self.run_quant, 'results':self.results}
+        pickle.dump(save_dict, open(fileprefix+'{}_dynestyrun_results.pkl'.format(self.target_name.replace(' ','_')), "wb"))
+        return
+
+
+    def load_results(self, fileprefix='./'):
+        save_dict = pickle.load(open(fileprefix+'{}_dynestyrun_results.pkl'.format(self.target_name.replace(' ','_')), "rb"))
+        self.run_median = save_dict['med']
+        self.run_quant = save_dict['quant']
+        self.results = save_dict['results']
+        return
+
 
     def generate_plots(self,daysback=2600,daysforward=1200,fileprefix='./tests/'):
         """
