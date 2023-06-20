@@ -205,7 +205,7 @@ class backtrack():
         jd_start, jd_end, number = ephem_open()
         star2_gaia = novas.make_cat_entry(star_name="BGR", catalog="HIP", star_num=2,
                                         ra=ra/15., dec=dec, pm_ra=pmra, pm_dec=pmdec,
-                                        parallax=par, rad_vel=1)
+                                        parallax=par, rad_vel=0)
         star2_icrs = novas.transform_cat(option=1, incat=star2_gaia, date_incat=2016., date_newcat=2000.,
                                          newcat_id="HIP")
         posx=[]
