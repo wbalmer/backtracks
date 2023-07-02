@@ -79,12 +79,14 @@ def plx_prior(backtrack, fileprefix='./'):
 
 def posterior(backtrack, fileprefix='./'):
     labels = ["RA (deg, ep=2016)","DEC (deg, ep=2016)","pmra (mas/yr)","pmdec (mas/yr)","parallax (mas)"]
+    levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2) # 1,2,3 sigma levels for a 2d gaussian
     # plot extended run (right)
     fg, ax = dyplot.cornerplot(backtrack.results,
                                color='cornflowerblue',
                                # truths=np.zeros(ndim),
                                # span=[(-4.5, 4.5) for i in range(ndim)],
                                labels=labels,
+                               levels=levels,
                                max_n_ticks=4,
                                # label_kwargs={},
                                show_titles=True,
@@ -221,10 +223,11 @@ def neighborhood(backtrack, fileprefix='./'):
     nearby_table['pmdec'] = backtrack.nearby['pmdec'].data
     nearby_table['parallax'] = backtrack.nearby['parallax'].data
     truths = np.array(backtrack.run_median).T[0][2:]
+    levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2) # 1,2,3 sigma levels for a 2d gaussian
     nearby_corner = corner.corner(nearby_table.dropna(), truths=truths,
                                   truth_color='cornflowerblue',
                                   smooth=1, smooth_1d=1,
-                                  quantiles=[0.003,0.997], levels=[0.68,0.95,0.997],
+                                  quantiles=[0.003,0.997], levels=levels,
                                  )
 
     plt.savefig(fileprefix+'{}_nearby_gaia_distribution.png'.format(backtrack.target_name.replace(' ','_')), dpi=300, bbox_inches='tight')
