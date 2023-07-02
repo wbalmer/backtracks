@@ -18,6 +18,8 @@ import pickle
 
 # sampling
 import dynesty
+from dynesty import utils as dyfunc
+from schwimmbad import MPIPool
 
 # computations
 import numpy as np
@@ -302,22 +304,80 @@ class backtrack():
             theta = ra,dec,pmra,pmdec
         return theta
 
-    def fit(self,dlogz=0.01,npool=4,dynamic=True):
+    def fit(self,dlogz=0.01,npool=4,dynamic=True,nlive=500,mpi_pool=False,resume=False):
         """
         """
         print('[BACKTRACK INFO]: Beginning sampling, I hope')
-        with dynesty.pool.Pool(npool, self.loglike, self.prior_transform) as pool: #where sampler is first created
-            if dynamic:
-                dsampler = dynesty.DynamicNestedSampler(pool.loglike, pool.prior_transform,
-                                                        5, pool=pool)
-                dsampler.run_nested(dlogz_init=dlogz)
-            else:
-                dsampler = dynesty.NestedSampler(pool.loglike, pool.prior_transform,
-                                                        5, pool=pool, nlive=1000)
-                dsampler.run_nested(dlogz=dlogz)
-            results = dsampler.results
+        ndim = 5
 
-        from dynesty import utils as dyfunc
+        if not mpi_pool:
+            with dynesty.pool.Pool(npool, self.loglike, self.prior_transform) as pool: #where sampler is first created
+                if dynamic:
+                    dsampler = dynesty.DynamicNestedSampler(
+                        loglikelihood=pool.loglike,
+                        prior_transform=pool.prior_transform,
+                        ndim=ndim,
+                        pool=pool,
+                    )
+
+                    dsampler.run_nested(
+                        dlogz_init=dlogz,
+                        checkpoint_file='dynesty.save',
+                        resume=resume,
+                    )
+
+                else:
+                    dsampler = dynesty.NestedSampler(
+                        loglikelihood=pool.loglike,
+                        prior_transform=pool.prior_transform,
+                        ndim=ndim,
+                        pool=pool,
+                        nlive=nlive,
+                    )
+
+                    dsampler.run_nested(
+                        dlogz=dlogz,
+                        checkpoint_file='dynesty.save',
+                        resume=resume,
+                    )
+
+        else:
+            pool = MPIPool()
+
+            if not pool.is_master():
+                pool.wait()
+                sys.exit(0)
+
+            if dynamic:
+                dsampler = dynesty.DynamicNestedSampler(
+                    loglikelihood=self.loglike,
+                    prior_transform=self.prior_transform,
+                    ndim=ndim,
+                    pool=pool,
+                )
+
+                dsampler.run_nested(
+                    dlogz_init=dlogz,
+                    checkpoint_file='dynesty.save',
+                    resume=resume,
+                )
+
+            else:
+                dsampler = dynesty.NestedSampler(
+                    loglikelihood=self.loglike,
+                    prior_transform=self.prior_transform,
+                    ndim=ndim,
+                    pool=pool,
+                    nlive=nlive,
+                )
+
+                dsampler.run_nested(
+                    dlogz=dlogz,
+                    checkpoint_file='dynesty.save',
+                    resume=resume,
+                )
+
+        results = dsampler.results
 
         # Extract sampling results.
         samples = results.samples  # samples

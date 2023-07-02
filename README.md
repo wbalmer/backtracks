@@ -17,5 +17,5 @@ Currently requires and python 3.9 ish and `astropy`, `corner`, `dynesty`, `matpl
 conda create python=3.9 -n backtrack
 conda activate backtrack
 conda install pip
-pip install numpy astropy matplotlib corner dynesty novas novas_de405 orbitize seaborn
+pip install numpy astropy matplotlib corner dynesty novas novas_de405 orbitize seaborn schwimmbad
 ```
