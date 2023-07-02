@@ -11,4 +11,11 @@ Current example (HD131399Ab) uses data from Wagner+22 and Nielsen+17. Thank you 
 
 Log-likelihood borrowed heavily from `orbitize!` (BSD 3-clause).
 
-Currently requires and python 3.9 ish and `astropy`, `corner`, `dynesty`, `matplotlib`, `numpy`, `novas`, `novas_de405`, `orbitize` and their dependencies.
+Currently requires and python 3.9 ish and `astropy`, `corner`, `dynesty`, `matplotlib`, `numpy`, `novas`, `novas_de405`, `orbitize` and their dependencies. Note that `novas` is not supported on Windows. You can create a working environment using conda+pip via a few lines of code:
+
+```
+conda create python=3.9 -n backtrack
+conda activate backtrack
+conda install pip
+pip install numpy astropy matplotlib corner dynesty novas novas_de405 orbitize seaborn
+```
