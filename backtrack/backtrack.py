@@ -15,6 +15,7 @@ import orbitize
 import orbitize.system
 import pandas as pd
 import pickle
+from pathlib import Path
 
 # sampling
 import dynesty
@@ -28,6 +29,9 @@ import numpy as np
 import astropy.units as u
 from astropy.time import Time
 from astropy.coordinates import SkyCoord, Angle
+from astropy.table import Table
+from astropy.io import fits
+
 # astroquery
 from astroquery.gaia import Gaia
 from astroquery.simbad import Simbad
@@ -105,7 +109,31 @@ class backtrack():
         self.decserr = astrometry[4]
         self.rho = astrometry[5]
 
-        self.nearby = self.query_astrometry(nearby_window)
+        if 'query_file' in kwargs:
+            self.gaia_id = int(Path(kwargs['query_file']).stem.split('_')[-1])
+            self.nearby = Table.read(kwargs['query_file'])
+
+            with fits.open(kwargs['query_file']) as hdu_list:
+                target_gaia = hdu_list[1].data
+                self.nearby = hdu_list[2].data
+
+        else:
+            self.nearby, self.gaia_id, target_gaia = self.query_astrometry(nearby_window)
+
+            target_table = fits.BinTableHDU(target_gaia)
+            nearby_table = fits.BinTableHDU(self.nearby)
+            hdu_list = fits.HDUList([fits.PrimaryHDU(), target_table, nearby_table])
+            hdu_list.writeto(f'gaia_query_{self.gaia_id}.fits', overwrite=True)
+
+        # set variables
+        self.rao = target_gaia['ra'][0] # deg
+        self.deco = target_gaia['dec'][0] # deg
+        self.pmrao = target_gaia['pmra'][0] # mas/yr
+        self.pmdeco = target_gaia['pmdec'][0] # mas/yr
+        self.paro = target_gaia['parallax'][0] # mas
+        self.radvelo = target_gaia['radial_velocity'][0]
+
+        self.set_prior_attr()
 
         # initial estimate for background star scenario (best guesses)
         # (manually looked at approximate offset from star with cosine compensation for
@@ -148,49 +176,47 @@ class backtrack():
 
     def query_astrometry(self,nearby_window=0.5):
         # resolve target in simbad
-        self.target_result_table = Simbad.query_object(self.target_name)
+        target_result_table = Simbad.query_object(self.target_name)
         print('[BACKTRACK INFO]: Resolved the target star \'{}\' in Simbad!'.format(self.target_name))
         # target_result_table.pprint()
         # get gaia ID from simbad
         for ID in Simbad.query_objectids(self.target_name)['ID']:
             if 'Gaia DR3' in ID:
-                self.gaia_id = int(ID.replace('Gaia DR3', ''))
-                print('[BACKTRACK INFO]: Resolved target\'s Gaia ID from Simbad, Gaia DR3',self.gaia_id)
+                gaia_id = int(ID.replace('Gaia DR3', ''))
+                print('[BACKTRACK INFO]: Resolved target\'s Gaia ID from Simbad, Gaia DR3',gaia_id)
 
-        coord = SkyCoord(ra=self.target_result_table['RA'][0],
-                         dec=self.target_result_table['DEC'][0],
+        coord = SkyCoord(ra=target_result_table['RA'][0],
+                         dec=target_result_table['DEC'][0],
                          unit=(u.hourangle, u.degree), frame='icrs')
         width = u.Quantity(50, u.arcsec)
         height = u.Quantity(50, u.arcsec)
         Gaia.ROW_LIMIT = -1
-        target_gaia = Gaia.query_object_async(coordinate=coord, width=width, height=height)
-        target_gaia = target_gaia[target_gaia['source_id']==self.gaia_id]
-        # set variables
-        self.rao = target_gaia['ra'][0] # deg
-        self.deco = target_gaia['dec'][0] # deg
-        self.pmrao = target_gaia['pmra'][0] # mas/yr
-        self.pmdeco = target_gaia['pmdec'][0] # mas/yr
-        self.paro = target_gaia['parallax'][0] # mas
-        self.radvelo = target_gaia['radial_velocity'][0]
+        columns = ['source_id', 'ra', 'dec', 'pmra', 'pmdec', 'parallax', 'radial_velocity']
+        target_gaia = Gaia.query_object_async(coordinate=coord, width=width, height=height, columns=columns)
+        target_gaia = target_gaia[target_gaia['source_id']==gaia_id]
 
         print('[BACKTRACK INFO]: gathered target Gaia data')
         # resolve nearby stars
         width = u.Quantity(nearby_window, u.deg)
         height = u.Quantity(nearby_window, u.deg)
         Gaia.ROW_LIMIT = -1
-        nearby = Gaia.query_object_async(coordinate=coord, width=width, height=height)
+        nearby = Gaia.query_object_async(coordinate=coord, width=width, height=height, columns=columns)
         print(r'[BACKTRACK INFO]: gathered {} Gaia objects from the {} sq. deg. nearby {}'.format(len(nearby), nearby_window, self.target_name))
-
-        # some statistics
-        self.mu_pmra = np.ma.median(nearby['pmra'].data)
-        self.sigma_pmra = np.ma.std(nearby['pmra'].data)
-
-        self.mu_pmdec = np.ma.median(nearby['pmdec'].data)
-        self.sigma_pmdec = np.ma.std(nearby['pmdec'].data)
-
-        self.mu_par = np.ma.median(nearby['parallax'].data)
-        self.sigma_par = np.ma.std(nearby['parallax'].data)
         print('[BACKTRACK INFO]: Finished nearby background gaia statistics')
+
+        # return table of nearby objects, target's gaia id, and table of target
+        return nearby, gaia_id, target_gaia
+
+    def set_prior_attr(self):
+        # some statistics
+        self.mu_pmra = np.ma.median(self.nearby['pmra'].data)
+        self.sigma_pmra = np.ma.std(self.nearby['pmra'].data)
+
+        self.mu_pmdec = np.ma.median(self.nearby['pmdec'].data)
+        self.sigma_pmdec = np.ma.std(self.nearby['pmdec'].data)
+
+        self.mu_par = np.ma.median(self.nearby['parallax'].data)
+        self.sigma_par = np.ma.std(self.nearby['parallax'].data)
 
         # query Bailer-Jones distance parameters
         healpix = np.floor(self.gaia_id / 562949953421312 )
@@ -199,9 +225,8 @@ class backtrack():
         self.L = distance_prior_params['GGDrlen'].values[0]
         self.alpha = distance_prior_params['GGDalpha'].values[0]
         self.beta = distance_prior_params['GGDbeta'].values[0]
+
         print('[BACKTRACK INFO]: Queried distance prior parameters, L={}, alpha={}, beta={}'.format(self.L, self.alpha, self.beta))
-        # return table of nearby objects
-        return nearby
 
     def radecdists(self,days,ra,dec,pmra,pmdec,par): # for multiple epochs
         jd_start, jd_end, number = ephem_open()
