@@ -111,7 +111,6 @@ class backtrack():
 
         if 'query_file' in kwargs:
             self.gaia_id = int(Path(kwargs['query_file']).stem.split('_')[-1])
-            self.nearby = Table.read(kwargs['query_file'])
 
             with fits.open(kwargs['query_file']) as hdu_list:
                 target_gaia = hdu_list[1].data
@@ -125,6 +124,8 @@ class backtrack():
             hdu_list = fits.HDUList([fits.PrimaryHDU(), target_table, nearby_table])
             hdu_list.writeto(f'gaia_query_{self.gaia_id}.fits', overwrite=True)
 
+        self.set_prior_attr()
+
         # set variables
         self.rao = target_gaia['ra'][0] # deg
         self.deco = target_gaia['dec'][0] # deg
@@ -132,8 +133,6 @@ class backtrack():
         self.pmdeco = target_gaia['pmdec'][0] # mas/yr
         self.paro = target_gaia['parallax'][0] # mas
         self.radvelo = target_gaia['radial_velocity'][0]
-
-        self.set_prior_attr()
 
         # initial estimate for background star scenario (best guesses)
         # (manually looked at approximate offset from star with cosine compensation for
@@ -177,7 +176,7 @@ class backtrack():
     def query_astrometry(self,nearby_window=0.5):
         # resolve target in simbad
         target_result_table = Simbad.query_object(self.target_name)
-        print('[BACKTRACK INFO]: Resolved the target star \'{}\' in Simbad!'.format(self.target_name))
+        print(f'[BACKTRACK INFO]: Resolved the target star \'{self.target_name}\' in Simbad!')
         # target_result_table.pprint()
         # get gaia ID from simbad
         for ID in Simbad.query_objectids(self.target_name)['ID']:
@@ -201,7 +200,7 @@ class backtrack():
         height = u.Quantity(nearby_window, u.deg)
         Gaia.ROW_LIMIT = -1
         nearby = Gaia.query_object_async(coordinate=coord, width=width, height=height, columns=columns)
-        print(r'[BACKTRACK INFO]: gathered {} Gaia objects from the {} sq. deg. nearby {}'.format(len(nearby), nearby_window, self.target_name))
+        print(rf'[BACKTRACK INFO]: gathered {len(nearby)} Gaia objects from the {nearby_window} sq. deg. nearby {self.target_name}')
         print('[BACKTRACK INFO]: Finished nearby background gaia statistics')
 
         # return table of nearby objects, target's gaia id, and table of target
@@ -226,7 +225,7 @@ class backtrack():
         self.alpha = distance_prior_params['GGDalpha'].values[0]
         self.beta = distance_prior_params['GGDbeta'].values[0]
 
-        print('[BACKTRACK INFO]: Queried distance prior parameters, L={}, alpha={}, beta={}'.format(self.L, self.alpha, self.beta))
+        print(f'[BACKTRACK INFO]: Queried distance prior parameters, L={self.L:.2f}, alpha={self.alpha:.2f}, beta={self.beta:.2f}')
 
     def radecdists(self,days,ra,dec,pmra,pmdec,par): # for multiple epochs
         jd_start, jd_end, number = ephem_open()
@@ -429,16 +428,16 @@ class backtrack():
 
     def save_results(self, fileprefix='./'):
         save_dict = {'med':self.run_median, 'quant':self.run_quant, 'results':self.results}
-        pickle.dump(save_dict, open(fileprefix+'{}_dynestyrun_results.pkl'.format(self.target_name.replace(' ','_')), "wb"))
-        return
+        file_name = f'{fileprefix}{self.target_name.replace(' ','_')}_dynestyrun_results.pkl'
+        pickle.dump(save_dict, open(file_name, "wb"))
 
 
     def load_results(self, fileprefix='./'):
-        save_dict = pickle.load(open(fileprefix+'{}_dynestyrun_results.pkl'.format(self.target_name.replace(' ','_')), "rb"))
+        file_name = f'{fileprefix}{self.target_name.replace(' ','_')}_dynestyrun_results.pkl'
+        save_dict = pickle.load(open(file_name, "rb"))
         self.run_median = save_dict['med']
         self.run_quant = save_dict['quant']
         self.results = save_dict['results']
-        return
 
 
     def generate_plots(self,daysback=2600,daysforward=1200,fileprefix='./tests/'):
