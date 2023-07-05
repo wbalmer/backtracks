@@ -428,12 +428,14 @@ class backtrack():
 
     def save_results(self, fileprefix='./'):
         save_dict = {'med':self.run_median, 'quant':self.run_quant, 'results':self.results}
-        file_name = f'{fileprefix}{self.target_name.replace(' ','_')}_dynestyrun_results.pkl'
+        target_label = self.target_name.replace(' ','_')
+        file_name = f'{fileprefix}{target_label}_dynestyrun_results.pkl'
         pickle.dump(save_dict, open(file_name, "wb"))
 
 
     def load_results(self, fileprefix='./'):
-        file_name = f'{fileprefix}{self.target_name.replace(' ','_')}_dynestyrun_results.pkl'
+        target_label = self.target_name.replace(' ','_')
+        file_name = f'{fileprefix}{target_label}_dynestyrun_results.pkl'
         save_dict = pickle.load(open(file_name, "rb"))
         self.run_median = save_dict['med']
         self.run_quant = save_dict['quant']
