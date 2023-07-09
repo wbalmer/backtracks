@@ -109,12 +109,18 @@ class backtrack():
         self.decserr = astrometry[4]
         self.rho = astrometry[5]
 
-        if 'query_file' in kwargs:
+        if 'query_file' in kwargs and kwargs['query_file'] is not None:
             self.gaia_id = int(Path(kwargs['query_file']).stem.split('_')[-1])
 
             with fits.open(kwargs['query_file']) as hdu_list:
-                target_gaia = hdu_list[1].data
-                self.nearby = hdu_list[2].data
+                target_gaia = Table(hdu_list[1].data, masked=True)
+                self.nearby = Table(hdu_list[2].data, masked=True)
+
+                for col in target_gaia.columns.values():
+                    col.mask = np.isnan(col)
+
+                for col in self.nearby.columns.values():
+                    col.mask = np.isnan(col)
 
         else:
             self.nearby, self.gaia_id, target_gaia = self.query_astrometry(nearby_window)
@@ -337,27 +343,42 @@ class backtrack():
         if not mpi_pool:
             with dynesty.pool.Pool(npool, self.loglike, self.prior_transform) as pool: #where sampler is first created
                 if dynamic:
-                    dsampler = dynesty.DynamicNestedSampler(
-                        loglikelihood=pool.loglike,
-                        prior_transform=pool.prior_transform,
-                        ndim=ndim,
-                        pool=pool,
-                    )
+                    if resume:
+                        dsampler = dynesty.DynamicNestedSampler.restore(
+                            fname='dynesty.save',
+                            pool=pool,
+                        )
+
+                    else:
+                        dsampler = dynesty.DynamicNestedSampler(
+                            loglikelihood=pool.loglike,
+                            prior_transform=pool.prior_transform,
+                            ndim=ndim,
+                            pool=pool,
+                        )
 
                     dsampler.run_nested(
                         dlogz_init=dlogz,
+                        nlive_init=nlive,
                         checkpoint_file='dynesty.save',
                         resume=resume,
                     )
 
                 else:
-                    dsampler = dynesty.NestedSampler(
-                        loglikelihood=pool.loglike,
-                        prior_transform=pool.prior_transform,
-                        ndim=ndim,
-                        pool=pool,
-                        nlive=nlive,
-                    )
+                    if resume:
+                        dsampler = dynesty.NestedSampler.restore(
+                            fname='dynesty.save',
+                            pool=pool,
+                        )
+
+                    else:
+                        dsampler = dynesty.NestedSampler(
+                            loglikelihood=pool.loglike,
+                            prior_transform=pool.prior_transform,
+                            ndim=ndim,
+                            pool=pool,
+                            nlive=nlive,
+                        )
 
                     dsampler.run_nested(
                         dlogz=dlogz,
@@ -373,27 +394,42 @@ class backtrack():
                 sys.exit(0)
 
             if dynamic:
-                dsampler = dynesty.DynamicNestedSampler(
-                    loglikelihood=self.loglike,
-                    prior_transform=self.prior_transform,
-                    ndim=ndim,
-                    pool=pool,
-                )
+                if resume:
+                    dsampler = dynesty.DynamicNestedSampler.restore(
+                        fname='dynesty.save',
+                        pool=pool,
+                    )
+
+                else:
+                    dsampler = dynesty.DynamicNestedSampler(
+                        loglikelihood=self.loglike,
+                        prior_transform=self.prior_transform,
+                        ndim=ndim,
+                        pool=pool,
+                    )
 
                 dsampler.run_nested(
                     dlogz_init=dlogz,
+                    nlive_init=nlive,
                     checkpoint_file='dynesty.save',
                     resume=resume,
                 )
 
             else:
-                dsampler = dynesty.NestedSampler(
-                    loglikelihood=self.loglike,
-                    prior_transform=self.prior_transform,
-                    ndim=ndim,
-                    pool=pool,
-                    nlive=nlive,
-                )
+                if resume:
+                    dsampler = dynesty.NestedSampler.restore(
+                        fname='dynesty.save',
+                        pool=pool,
+                    )
+
+                else:
+                    dsampler = dynesty.NestedSampler(
+                        loglikelihood=self.loglike,
+                        prior_transform=self.prior_transform,
+                        ndim=ndim,
+                        pool=pool,
+                        nlive=nlive,
+                    )
 
                 dsampler.run_nested(
                     dlogz=dlogz,
