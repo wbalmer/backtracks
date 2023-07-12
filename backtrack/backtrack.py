@@ -224,8 +224,9 @@ class backtrack():
         self.sigma_par = np.ma.std(self.nearby['parallax'].data)
 
         # query Bailer-Jones distance parameters
-        healpix = np.floor(self.gaia_id / 562949953421312 )
-        distance_prior_params = pd.read_csv('bailer-jones_edr3_prior_summary.csv')
+        healpix = np.floor(self.gaia_id / 562949953421312)
+        data_file = Path(__file__).parent.resolve() / 'bailer-jones_edr3.csv'
+        distance_prior_params = pd.read_csv(data_file)
         distance_prior_params = distance_prior_params[distance_prior_params['healpix']==healpix]
         self.L = distance_prior_params['GGDrlen'].values[0]
         self.alpha = distance_prior_params['GGDalpha'].values[0]
