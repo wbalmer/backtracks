@@ -1,14 +1,10 @@
 # backtrack utility functions. stand on the shoulders of giants, its fun!
 
 # imports
-import orbitize
 import orbitize.system
 import numpy as np
 from scipy.stats import norm
 from scipy.special import gammainc, gammaincc, gammainccinv, gammaincinv
-import novas.compat as novas
-from novas.compat.eph_manager import ephem_open
-from astropy.coordinates import SkyCoord, Angle
 
 
 def pol2car(sep, pa, seperr, paerr, corr=np.nan):
