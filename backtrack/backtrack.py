@@ -384,7 +384,6 @@ class backtrack():
 
                     dsampler.run_nested(
                         dlogz=dlogz,
-                        maxiter=10000,
                         checkpoint_file='dynesty.save',
                         resume=resume,
                     )
