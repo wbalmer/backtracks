@@ -86,21 +86,30 @@ class backtrack():
         # planet candidate astrometry
         candidate = pd.read_csv(candidate_file)
 
-        astrometry = np.zeros((6,len(candidate))) # epoch, ra, dec, raerr, decerr, rho
+        astrometry = np.zeros((6, len(candidate))) # epoch, ra, dec, raerr, decerr, rho
+
         for i,quant in enumerate(candidate['quant_type']):
             if quant=='radec':
-                epoch, _, ra, raerr, dec, decerr, rho2, _ = candidate.iloc[i]
+                epoch, ra, raerr, dec, decerr, rho2 = \
+                    candidate.iloc[i, 0], candidate.iloc[i, 2], candidate.iloc[i, 3], \
+                    candidate.iloc[i, 4], candidate.iloc[i, 5], candidate.iloc[i, 6]
+
             elif quant=='seppa':
-                epoch, _, sep, seperr, pa, paerr, rho, _ = candidate.iloc[i]
-                ra, dec, raerr, decerr, rho2 = pol2car(sep,pa,seperr,paerr,corr=rho)
+                epoch, sep, seperr, pa, paerr, rho = \
+                    candidate.iloc[i, 0], candidate.iloc[i, 2], candidate.iloc[i, 3], \
+                    candidate.iloc[i, 4], candidate.iloc[i, 5], candidate.iloc[i, 6]
+
+                ra, dec, raerr, decerr, rho2 = pol2car(sep, pa, seperr, paerr, corr=rho)
+
                 if np.isnan(rho):
                     rho2 = np.nan
-            astrometry[0,i] += epoch+2400000.5
-            astrometry[1,i] += ra
-            astrometry[2,i] += dec
-            astrometry[3,i] += raerr
-            astrometry[4,i] += decerr
-            astrometry[5,i] += rho2
+
+            astrometry[0, i] += epoch + 2400000.5
+            astrometry[1, i] += ra
+            astrometry[2, i] += dec
+            astrometry[3, i] += raerr
+            astrometry[4, i] += decerr
+            astrometry[5, i] += rho2
 
         self.epochs = astrometry[0]
         self.ras = astrometry[1]
@@ -138,7 +147,7 @@ class backtrack():
         self.pmrao = target_gaia['pmra'][0] # mas/yr
         self.pmdeco = target_gaia['pmdec'][0] # mas/yr
         self.paro = target_gaia['parallax'][0] # mas
-        self.radvelo = target_gaia['radial_velocity'][0]
+        self.radvelo = target_gaia['radial_velocity'][0] # km/s
 
         # initial estimate for background star scenario (best guesses)
         # (manually looked at approximate offset from star with cosine compensation for
@@ -177,7 +186,6 @@ class backtrack():
         # not sure if app_star needs Epoch 2000 input. In any case we will evaluate targets at the same
         # observing epoch and only look at offsets so any difference in coordinate reference should cancel out
         # (might be important when including absolute astrometry).
-
 
     def query_astrometry(self,nearby_window=0.5):
         # resolve target in simbad
@@ -260,10 +268,8 @@ class backtrack():
             posy.append(position_y)
         return np.array(posx),np.array(posy)
 
-
     def fmodel(self, param):
         return self.radecdists(self.epochs, param)
-
 
     def loglike(self, param):
         """
@@ -295,7 +301,6 @@ class backtrack():
             like += chi2
             return like
 
-
     def prior_transform(self, u):
         """Transforms samples `u` drawn from the unit cube to samples to those
         from our prior for each variable.
@@ -309,10 +314,8 @@ class backtrack():
 
             # par prior
             L = self.L # 1.35e3 length scale value from astraatmadja+ 2016
-            alpha = self.alpha # 1
-            beta = self.alpha # 2
             # the PPF of Bailer-Jones 2015 eq. 17
-            par = 1000/transform_gengamm(par, L, alpha, beta) # [units of mas]
+            par = 1000/transform_gengamm(par, L, self.alpha, self.beta) # [units of mas]
             # truncate distribution at 100 kpc (Nielsen+ 2017 do this at 10 kpc)
             if par < 1e-2:
                 par = -np.inf
@@ -320,11 +323,10 @@ class backtrack():
         else:
             ra, dec, pmra, pmdec = param
 
-        unifpos = self.unif
         # uniform ra prior
-        ra = transform_uniform(ra, self.ra0-unifpos, self.ra0+unifpos)
+        ra = transform_uniform(ra, self.ra0-self.unif, self.ra0+self.unif)
         # uniform dec prior
-        dec = transform_uniform(dec, self.dec0-unifpos, self.dec0+unifpos)
+        dec = transform_uniform(dec, self.dec0-self.unif, self.dec0+self.unif)
 
         pmra = transform_normal(pmra, self.mu_pmra, self.sigma_pmra)
         pmdec = transform_normal(pmdec, self.mu_pmdec, self.sigma_pmdec)
@@ -380,6 +382,7 @@ class backtrack():
                             ndim=ndim,
                             pool=pool,
                             nlive=nlive,
+                            sample='rwalk',
                         )
 
                     dsampler.run_nested(
@@ -463,13 +466,11 @@ class backtrack():
         self.results = results_sim
         return results_sim
 
-
     def save_results(self, fileprefix='./'):
         save_dict = {'med':self.run_median, 'quant':self.run_quant, 'results':self.results}
         target_label = self.target_name.replace(' ','_')
         file_name = f'{fileprefix}{target_label}_dynestyrun_results.pkl'
         pickle.dump(save_dict, open(file_name, "wb"))
-
 
     def load_results(self, fileprefix='./'):
         target_label = self.target_name.replace(' ','_')
@@ -478,7 +479,6 @@ class backtrack():
         self.run_median = save_dict['med']
         self.run_quant = save_dict['quant']
         self.results = save_dict['results']
-
 
     def generate_plots(self, days_backward=5.*365., days_forward=5.*365., plot_radec=False, fileprefix='./plots/'):
         """
