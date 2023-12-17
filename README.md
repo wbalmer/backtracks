@@ -18,5 +18,6 @@ conda create python=3.9 -n backtrack
 conda activate backtrack
 conda install pip
 git clone https://github.com/wbalmer/backtrack.git
-pip install -r requirements.txt
+cd backtrack
+pip install -e .
 ```
