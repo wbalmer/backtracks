@@ -1,0 +1,14 @@
+LICENSE
+README.md
+pyproject.toml
+requirements.txt
+src/backtracks/__init__.py
+src/backtracks/backtrack.py
+src/backtracks/plotting.py
+src/backtracks/utils.py
+src/backtracks.egg-info/PKG-INFO
+src/backtracks.egg-info/SOURCES.txt
+src/backtracks.egg-info/dependency_links.txt
+src/backtracks.egg-info/requires.txt
+src/backtracks.egg-info/top_level.txt
+tests/test_plotting.py

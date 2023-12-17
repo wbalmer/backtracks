@@ -1,7 +1,7 @@
 # backtrack
 Python package to fit relative astrometry with background star motion tracks.
 
-Written by Gilles Otten (@gotten) and William Balmer (@wbalmer).
+Written by Gilles Otten (@gotten), William Balmer (@wbalmer), and Tomas Stolker (@tomasstolker).
 
 Work in progress, as of Jun. 15th, 2023.
 
@@ -17,5 +17,14 @@ Currently requires and python 3.9 ish and `astropy`, `corner`, `dynesty`, `matpl
 conda create python=3.9 -n backtrack
 conda activate backtrack
 conda install pip
-pip install numpy astropy matplotlib corner dynesty novas novas_de405 orbitize seaborn schwimmbad
+git clone https://github.com/wbalmer/backtrack.git
+cd backtrack
+pip install -e .
+```
+
+Then, test your installation (takes a while to sample fully):
+
+```
+cd tests
+python hd131399a.py
 ```

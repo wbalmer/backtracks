@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "backtracks"
+version = "0.3.0"
+authors = [
+  { name="William Balmer", email="wbalmer1@jhu.com" },
+  { name="Gilles Otten", email="gpplotten@asiaa.sinica.edu.tw" },
+  { name="Tomas Stolker", email="stolker@strw.leidenuniv.nl" },
+]
+description = "Python package to fit relative astrometry with background star motion tracks."
+readme = "README.md"
+requires-python = ">=3.9,<3.10"
+dynamic = ["dependencies"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[project.urls]
+Homepage = "https://github.com/wbalmer/backtrack"
+Issues = "https://github.com/wbalmer/backtrack/issues"
