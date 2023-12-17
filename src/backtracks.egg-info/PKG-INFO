@@ -43,5 +43,13 @@ conda create python=3.9 -n backtrack
 conda activate backtrack
 conda install pip
 git clone https://github.com/wbalmer/backtrack.git
-pip install -r requirements.txt
+cd backtrack
+pip install -e .
+```
+
+Then, test your installation (takes a while to sample fully):
+
+```
+cd tests
+python hd131399a.py
 ```

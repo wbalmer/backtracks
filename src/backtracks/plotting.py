@@ -35,17 +35,17 @@ def tickform(x, pos):
     return '%.4f' % x
 
 
-def diagnostic(backtrack, fileprefix='./'):
+def diagnostic(backtrack, fileprefix='./', filepost='.pdf'):
     # Plot results.
     fig, axes = dyplot.runplot(backtrack.results, color='cornflowerblue')
 
     target_name = backtrack.target_name.replace(' ','_')
-    plt.savefig(f'{fileprefix}{target_name}_evidence_bgstar.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{fileprefix}{target_name}_evidence_backtrack'+filepost, dpi=300, bbox_inches='tight')
 
     return fig
 
 
-def plx_prior(backtrack, fileprefix='./'):
+def plx_prior(backtrack, fileprefix='./', filepost='.pdf'):
     beta = backtrack.beta
     alpha = backtrack.alpha
     L = backtrack.L
@@ -58,12 +58,12 @@ def plx_prior(backtrack, fileprefix='./'):
     plt.legend()
 
     target_name = backtrack.target_name.replace(' ','_')
-    plt.savefig(f"{fileprefix}{target_name}_bjprior_bgstar.png", dpi=300, bbox_inches='tight')
+    plt.savefig(f"{fileprefix}{target_name}_bjprior_backtrack"+filepost, dpi=300, bbox_inches='tight')
 
     return fig
 
 
-def posterior(backtrack, fileprefix='./'):
+def posterior(backtrack, fileprefix='./', filepost='.pdf'):
     labels = ["RA (deg, ep=2016)","DEC (deg, ep=2016)","pmra (mas/yr)","pmdec (mas/yr)","parallax (mas)"]
     levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2) # 1,2,3 sigma levels for a 2d gaussian
     # plot extended run (right)
@@ -97,11 +97,12 @@ def posterior(backtrack, fileprefix='./'):
     # ax[-1,-1].set_xlim(xmin=1e-2)
 
     target_name = backtrack.target_name.replace(' ','_')
-    plt.savefig(f"{fileprefix}{target_name}_corner_bgstar.png", dpi=300, bbox_inches='tight')
+    plt.savefig(f"{fileprefix}{target_name}_corner_backtrack"+filepost, dpi=300, bbox_inches='tight')
 
     return fig
 
-def trackplot(backtrack, days_backward=5.*365., days_forward=5.*365., plot_radec=False, fileprefix='./'):
+def trackplot(backtrack, days_backward=5.*365., days_forward=5.*365., 
+              plot_radec=False, plot_stationary=False, fileprefix='./', filepost='.pdf'):
     """
     """
     fig, axs = plt.subplot_mosaic(
@@ -130,15 +131,19 @@ def trackplot(backtrack, days_backward=5.*365., days_forward=5.*365., plot_radec
 
     # Plot stationary background track at infinity
 
-    # stat_pars = best_pars.copy()
-    # stat_pars[2:] = 0.0
-    #
-    # ra_stat, dec_stat = backtrack.radecdists(plot_epochs, stat_pars)
-    # axs['A'].plot(ra_stat, dec_stat, color="lightgray", label="stationary background", ls='--')
-    #
-    # sep_stat, pa_stat = orbitize.system.radec2seppa(ra_stat, dec_stat)
-    # axs['B'].plot(plot_times.decimalyear, sep_stat, color='lightgray', ls='--')
-    # axs['C'].plot(plot_times.decimalyear, pa_stat, color='lightgray', ls='--')
+    if plot_stationary:
+        stat_pars = best_pars.copy()
+        stat_pars[2:] = 0.0
+        
+        ra_stat, dec_stat = backtrack.radecdists(plot_epochs, stat_pars)
+        axs['A'].plot(ra_stat, dec_stat, color="lightgray", label="stationary background", ls='--')
+        if plot_radec:
+            axs['B'].plot(plot_times.decimalyear, ra_stat, color="lightgray", ls='--')
+            axs['C'].plot(plot_times.decimalyear, dec_stat, color="lightgray", ls='--')
+        else:
+            sep_stat, pa_stat = orbitize.system.radec2seppa(ra_stat, dec_stat)
+            axs['B'].plot(plot_times.decimalyear, sep_stat, color='lightgray', ls='--')
+            axs['C'].plot(plot_times.decimalyear, pa_stat, color='lightgray', ls='--')
 
     # Plot random samples from the posterior in (deltaRA, deltaDec)
 
@@ -193,14 +198,14 @@ def trackplot(backtrack, days_backward=5.*365., days_forward=5.*365., plot_radec
 
     # Plot coordinates at observation epochs for best-fit parameters
 
-    axs['A'].plot(ra_bg_best, dec_bg_best, color="tab:orange", mec='tab:gray',
+    axs['A'].plot(ra_bg_best, dec_bg_best, color="tomato", mec='tab:gray',
                   ms=5., mew=1.5, linestyle="none", marker="o")
 
     # Plot data points (deltaRA, deltaDEC)
 
     axs['A'].errorbar(backtrack.ras, backtrack.decs,
                       yerr=backtrack.decserr, xerr=backtrack.raserr,
-                      color="tab:gray", ecolor='tab:orange', mec='tab:orange',
+                      color="tab:gray", ecolor='tomato', mec='tomato',
                       label="data", linestyle="none", marker="o", ms=5., mew=1.5)
 
     # Plot deltaRA/deltaDec or sep/PA as function of date
@@ -210,13 +215,13 @@ def trackplot(backtrack, days_backward=5.*365., days_forward=5.*365., plot_radec
 
         axs['B'].errorbar(data_times.decimalyear, backtrack.ras,
                           yerr=backtrack.raserr, color="tab:gray",
-                          ecolor='tab:orange', linestyle="none",
-                          marker='o', ms=5., mew=1.5, mec='tab:orange')
+                          ecolor='tomato', linestyle="none",
+                          marker='o', ms=5., mew=1.5, mec='tomato')
 
         axs['C'].errorbar(data_times.decimalyear, backtrack.decs,
                           yerr=backtrack.decserr, color="tab:gray",
-                          ecolor='tab:orange', linestyle="none",
-                          marker='o', ms=5., mew=1.5, mec='tab:orange')
+                          ecolor='tomato', linestyle="none",
+                          marker='o', ms=5., mew=1.5, mec='tomato')
 
     else:
         # Plot the sep and PA data points that are not corr_terms
@@ -227,10 +232,10 @@ def trackplot(backtrack, days_backward=5.*365., days_forward=5.*365., plot_radec
         pa_err = np.degrees(sep_err/sep)
 
         axs['B'].errorbar(data_times.decimalyear[~corr_terms], sep,
-                          yerr=sep_err, color="tab:orange", linestyle="none")
+                          yerr=sep_err, color="tomato", linestyle="none")
 
         axs['C'].errorbar(data_times.decimalyear[~corr_terms], pa,
-                          yerr=pa_err, color="tab:orange", linestyle="none")
+                          yerr=pa_err, color="tomato", linestyle="none")
 
         # Plot the sep and PA data points that are corr_terms
         # Transform the uncertainties from RA/Dec to sep/PA
@@ -244,10 +249,10 @@ def trackplot(backtrack, days_backward=5.*365., days_forward=5.*365., plot_radec
                 backtrack.rho[corr_terms][i], orbitize.system.radec2seppa)
 
             axs['B'].errorbar(data_times.decimalyear[corr_terms][i], sep[i], yerr=sep_err,
-                              color="tab:orange", linestyle="none", marker='none')
+                              color="tomato", linestyle="none", marker='none')
 
             axs['C'].errorbar(data_times.decimalyear[corr_terms][i], pa[i], yerr=pa_err,
-                              color="tab:orange", linestyle="none", marker='none')
+                              color="tomato", linestyle="none", marker='none')
 
     axs['A'].invert_xaxis()
     axs['A'].axis('equal')
@@ -267,12 +272,12 @@ def trackplot(backtrack, days_backward=5.*365., days_forward=5.*365., plot_radec
     plt.tight_layout()
 
     target_name = backtrack.target_name.replace(' ','_')
-    plt.savefig(f"{fileprefix}{target_name}_model_bgstar.png", dpi=300, bbox_inches='tight')
+    plt.savefig(f"{fileprefix}{target_name}_model_backtrack"+filepost, dpi=300, bbox_inches='tight')
 
     return fig
 
 
-def neighborhood(backtrack, fileprefix='./'):
+def neighborhood(backtrack, fileprefix='./', filepost='.pdf'):
     """
     """
     # check how unlikely the fit motion is by comparing the distribution to the nearby Gaia distribution
@@ -299,12 +304,12 @@ def neighborhood(backtrack, fileprefix='./'):
                         levels=levels)
 
     target_name = backtrack.target_name.replace(' ','_')
-    plt.savefig(f'{fileprefix}{target_name}_nearby_gaia_distribution.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{fileprefix}{target_name}_nearby_gaia_distribution'+filepost, dpi=300, bbox_inches='tight')
 
     return fig
 
 
-def stationtrackplot(backtrack, daysback=2600, daysforward=1200, fileprefix='./'):
+def stationtrackplot(backtrack, daysback=2600, daysforward=1200, fileprefix='./', filepost='.pdf'):
     """
     """
     fig,axs = plt.subplot_mosaic(
@@ -336,9 +341,9 @@ def stationtrackplot(backtrack, daysback=2600, daysforward=1200, fileprefix='./'
 
     # plot data in deltaRA, deltaDEC plot
     axs['A'].errorbar(backtrack.ras[~corr_terms],backtrack.decs[~corr_terms],yerr=backtrack.decserr[~corr_terms],xerr=backtrack.raserr[~corr_terms],
-                      color="xkcd:orange",label="data",linestyle="", zorder=5)
+                      color="tomato",label="data",linestyle="", zorder=5)
     axs['A'].errorbar(backtrack.ras[corr_terms],backtrack.decs[corr_terms],yerr=backtrack.decserr[corr_terms],xerr=backtrack.raserr[corr_terms],
-                      color="xkcd:orange",linestyle="",marker=".", zorder=5)
+                      color="tomato",linestyle="",marker=".", zorder=5)
     # labels
     # plt.suptitle("fitted model of background star for YSES-2")
     axs['A'].invert_xaxis()
@@ -354,21 +359,21 @@ def stationtrackplot(backtrack, daysback=2600, daysforward=1200, fileprefix='./'
     sep,pa=orbitize.system.radec2seppa(backtrack.ras[~corr_terms],backtrack.decs[~corr_terms])
     sep_err=0.5*backtrack.raserr[~corr_terms]+0.5*backtrack.decserr[~corr_terms]
     pa_err=np.degrees(sep_err/sep)
-    axs['B'].errorbar(data_times.decimalyear[~corr_terms],sep,yerr=sep_err,color="xkcd:orange",linestyle="", zorder=5)
-    axs['C'].errorbar(data_times.decimalyear[~corr_terms],pa,yerr=pa_err,color="xkcd:orange",linestyle="", zorder=5)
+    axs['B'].errorbar(data_times.decimalyear[~corr_terms],sep,yerr=sep_err,color="tomato",linestyle="", zorder=5)
+    axs['C'].errorbar(data_times.decimalyear[~corr_terms],pa,yerr=pa_err,color="tomato",linestyle="", zorder=5)
 
     # plot the corr_terms datapoints with a conversion in the sep and PA plots
     sep, pa = orbitize.system.radec2seppa(backtrack.ras[corr_terms],backtrack.decs[corr_terms])
     for i in np.arange(np.sum(corr_terms)):
         sep_err,pa_err,rho2 = orbitize.system.transform_errors(ras[corr_terms][i], backtrack.decs[corr_terms][i],
                                                                backtrack.raserr[corr_terms][i], backtrack.decserr[corr_terms][i], backtrack.rho[corr_terms][i], orbitize.system.radec2seppa)
-        axs['B'].errorbar(data_times.decimalyear[corr_terms][i], sep[i], yerr=sep_err, color="xkcd:orange", linestyle="", marker='.', zorder=5)
-        axs['C'].errorbar(data_times.decimalyear[corr_terms][i], pa[i], yerr=pa_err, color="xkcd:orange", linestyle="", marker='.', zorder=5)
+        axs['B'].errorbar(data_times.decimalyear[corr_terms][i], sep[i], yerr=sep_err, color="tomato", linestyle="", marker='.', zorder=5)
+        axs['C'].errorbar(data_times.decimalyear[corr_terms][i], pa[i], yerr=pa_err, color="tomato", linestyle="", marker='.', zorder=5)
     axs['A'].legend()
 
     plt.tight_layout()
 
     target_name = backtrack.target_name.replace(' ','_')
-    plt.savefig(f"{fileprefix}{target_name}_model_stationary_bgstar.png", dpi=300, bbox_inches='tight')
+    plt.savefig(f"{fileprefix}{target_name}_model_stationary_backtrack"+filepost, dpi=300, bbox_inches='tight')
 
     return fig

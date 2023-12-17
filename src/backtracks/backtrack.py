@@ -447,7 +447,7 @@ class system():
         self.run_median = [dyfunc.quantile(samps, [0.5], weights=weights)
                      for samps in samples.T]
 
-        self.run_quant = [dyfunc.quantile(samps, [0.32, 0.68], weights=weights)
+        self.run_quant = [dyfunc.quantile(samps, [0.16, 0.84], weights=weights)
                      for samps in samples.T]
 
         # Resample weighted samples.
@@ -473,11 +473,12 @@ class system():
         self.run_quant = save_dict['quant']
         self.results = save_dict['results']
 
-    def generate_plots(self, days_backward=5.*365., days_forward=5.*365., plot_radec=False, fileprefix='./plots/'):
+    def generate_plots(self, days_backward=5.*365., days_forward=5.*365., 
+                       plot_radec=False, plot_stationary=False, fileprefix='./plots/'):
         """
         """
         diagnos = diagnostic(self)
         plx_prior(self)
         post = posterior(self)
-        tracks = trackplot(self, days_backward=days_backward, days_forward=days_forward, plot_radec=plot_radec)
+        tracks = trackplot(self, days_backward=days_backward, days_forward=days_forward, plot_radec=plot_radec, plot_stationary=plot_stationary)
         hood = neighborhood(self)
