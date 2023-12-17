@@ -1,10 +1,11 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0",
+            "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "backtracks"
-version = "0.3.0"
+version = "0.3.1"
 authors = [
   { name="William Balmer", email="wbalmer1@jhu.com" },
   { name="Gilles Otten", email="gpplotten@asiaa.sinica.edu.tw" },
@@ -20,6 +21,9 @@ classifiers = [
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [project.urls]
 Homepage = "https://github.com/wbalmer/backtrack"
