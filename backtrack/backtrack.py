@@ -63,8 +63,8 @@ sb.set_context("talk")
 # target_name = "HD 131399 A"
 # candidate_file = "scorpions1b_orbitizelike.csv"
 
-from backtrack.utils import *
-from backtrack.plotting import *
+from backtrack.utils import pol2car, transform_gengamm, transform_normal, transform_uniform
+from backtrack.plotting import diagnostic, neighborhood, plx_prior, posterior, trackplot
 
 # TODO: CLASS STRUCTURE AND USER INPUTS
 # TODO: include gaia errors within prior
@@ -86,21 +86,30 @@ class backtrack():
         # planet candidate astrometry
         candidate = pd.read_csv(candidate_file)
 
-        astrometry = np.zeros((6,len(candidate))) # epoch, ra, dec, raerr, decerr, rho
+        astrometry = np.zeros((6, len(candidate))) # epoch, ra, dec, raerr, decerr, rho
+
         for i,quant in enumerate(candidate['quant_type']):
             if quant=='radec':
-                epoch, _, ra, raerr, dec, decerr, rho2, _ = candidate.iloc[i]
+                epoch, ra, raerr, dec, decerr, rho2 = \
+                    candidate.iloc[i, 0], candidate.iloc[i, 2], candidate.iloc[i, 3], \
+                    candidate.iloc[i, 4], candidate.iloc[i, 5], candidate.iloc[i, 6]
+
             elif quant=='seppa':
-                epoch, _, sep, seperr, pa, paerr, rho, _ = candidate.iloc[i]
-                ra, dec, raerr, decerr, rho2 = pol2car(sep,pa,seperr,paerr,corr=rho)
+                epoch, sep, seperr, pa, paerr, rho = \
+                    candidate.iloc[i, 0], candidate.iloc[i, 2], candidate.iloc[i, 3], \
+                    candidate.iloc[i, 4], candidate.iloc[i, 5], candidate.iloc[i, 6]
+
+                ra, dec, raerr, decerr, rho2 = pol2car(sep, pa, seperr, paerr, corr=rho)
+
                 if np.isnan(rho):
                     rho2 = np.nan
-            astrometry[0,i] += epoch+2400000.5
-            astrometry[1,i] += ra
-            astrometry[2,i] += dec
-            astrometry[3,i] += raerr
-            astrometry[4,i] += decerr
-            astrometry[5,i] += rho2
+
+            astrometry[0, i] += epoch + 2400000.5
+            astrometry[1, i] += ra
+            astrometry[2, i] += dec
+            astrometry[3, i] += raerr
+            astrometry[4, i] += decerr
+            astrometry[5, i] += rho2
 
         self.epochs = astrometry[0]
         self.ras = astrometry[1]
@@ -138,7 +147,7 @@ class backtrack():
         self.pmrao = target_gaia['pmra'][0] # mas/yr
         self.pmdeco = target_gaia['pmdec'][0] # mas/yr
         self.paro = target_gaia['parallax'][0] # mas
-        self.radvelo = target_gaia['radial_velocity'][0]
+        self.radvelo = target_gaia['radial_velocity'][0] # km/s
 
         # initial estimate for background star scenario (best guesses)
         # (manually looked at approximate offset from star with cosine compensation for
@@ -153,7 +162,7 @@ class backtrack():
         self.jd_tt = novas.julian_date(jd_tt[0], jd_tt[1], jd_tt[2], jd_tt[3]) # date used as starting data for plots
         print('[BACKTRACK INFO]: JD_TT set')
         jd_start, jd_end, number = ephem_open()
-        print('[BACKTRACK INFO]: Opened ephemrids file')
+        print('[BACKTRACK INFO]: Opened ephemeris file')
         # if the novas_de405 package is installed this will load the ephemerids file,
         # this will handle nutation, precession, gravitational lensing by (and barycenter motion induced by?) solar system bodies, etc.
         # ephem_open("DE440.bin")
@@ -177,7 +186,6 @@ class backtrack():
         # not sure if app_star needs Epoch 2000 input. In any case we will evaluate targets at the same
         # observing epoch and only look at offsets so any difference in coordinate reference should cancel out
         # (might be important when including absolute astrometry).
-
 
     def query_astrometry(self,nearby_window=0.5):
         # resolve target in simbad
@@ -234,7 +242,12 @@ class backtrack():
 
         print(f'[BACKTRACK INFO]: Queried distance prior parameters, L={self.L:.2f}, alpha={self.alpha:.2f}, beta={self.beta:.2f}')
 
-    def radecdists(self,days,ra,dec,pmra,pmdec,par): # for multiple epochs
+    def radecdists(self, days, param): # for multiple epochs
+        if len(param) == 4:
+            ra, dec, pmra, pmdec = param
+        else:
+            ra, dec, pmra, pmdec, par = param
+
         jd_start, jd_end, number = ephem_open()
         star2_gaia = novas.make_cat_entry(star_name="BGR", catalog="HIP", star_num=2,
                                         ra=ra/15., dec=dec, pm_ra=pmra, pm_dec=pmdec,
@@ -255,27 +268,19 @@ class backtrack():
             posy.append(position_y)
         return np.array(posx),np.array(posy)
 
+    def fmodel(self, param):
+        return self.radecdists(self.epochs, param)
 
-    def fmodel(self,theta):
-        if len(theta) == 5:
-            ra, dec, pmra, pmdec, par = theta # unpacking parameters
-        else:
-            ra, dec, pmra, pmdec = theta
-            par = 0
-        xs,ys = self.radecdists(self.epochs, ra, dec, pmra, pmdec, par)
-        return xs,ys
-
-
-    def loglike(self,theta):
+    def loglike(self, param):
         """
         chi2 likelihood function.
         """
 
-        if np.isnan(np.sum(theta)) or np.isinf(np.sum(theta)):
+        if np.isnan(np.sum(param)) or np.isinf(np.sum(param)):
             # if nan or inf, avoid calling fmodel
             return -np.inf
 
-        xs,ys = self.fmodel(theta)
+        xs,ys = self.fmodel(param)
 
         # separate terms where there is a correlation
         corr_terms = ~np.isnan(self.rho)
@@ -296,7 +301,6 @@ class backtrack():
             like += chi2
             return like
 
-
     def prior_transform(self, u):
         """Transforms samples `u` drawn from the unit cube to samples to those
         from our prior for each variable.
@@ -304,36 +308,35 @@ class backtrack():
         For parallax, we follow Bailer-Jones 2015, eq.17 and Astraatmadja+ 2016
 
         """
-        theta = np.array(u) # copy u
-        if len(theta) == 5:
-            ra, dec, pmra, pmdec, par = theta # unpacking parameters
+        param = np.array(u) # copy u
+        if len(param) == 5:
+            ra, dec, pmra, pmdec, par = param # unpacking parameters
 
             # par prior
             L = self.L # 1.35e3 length scale value from astraatmadja+ 2016
-            alpha = self.alpha # 1
-            beta = self.alpha # 2
             # the PPF of Bailer-Jones 2015 eq. 17
-            par = 1000/transform_gengamm(par, L, alpha, beta) # [units of mas]
+            par = 1000/transform_gengamm(par, L, self.alpha, self.beta) # [units of mas]
             # truncate distribution at 100 kpc (Nielsen+ 2017 do this at 10 kpc)
             if par < 1e-2:
                 par = -np.inf
 
         else:
-            ra, dec, pmra, pmdec = theta
-        unifpos = self.unif
+            ra, dec, pmra, pmdec = param
+
         # uniform ra prior
-        ra = transform_uniform(ra, self.ra0-unifpos, self.ra0+unifpos)
+        ra = transform_uniform(ra, self.ra0-self.unif, self.ra0+self.unif)
         # uniform dec prior
-        dec = transform_uniform(dec, self.dec0-unifpos, self.dec0+unifpos)
+        dec = transform_uniform(dec, self.dec0-self.unif, self.dec0+self.unif)
 
         pmra = transform_normal(pmra, self.mu_pmra, self.sigma_pmra)
         pmdec = transform_normal(pmdec, self.mu_pmdec, self.sigma_pmdec)
 
-        if len(theta) == 5:
-            theta = ra,dec,pmra,pmdec,par
+        if len(param) == 5:
+            param = ra, dec, pmra, pmdec, par
         else:
-            theta = ra,dec,pmra,pmdec
-        return theta
+            param = ra, dec, pmra, pmdec
+
+        return param
 
     def fit(self,dlogz=0.01,npool=4,dynamic=True,nlive=500,mpi_pool=False,resume=False):
         """
@@ -379,6 +382,7 @@ class backtrack():
                             ndim=ndim,
                             pool=pool,
                             nlive=nlive,
+                            sample='rwalk',
                         )
 
                     dsampler.run_nested(
@@ -462,13 +466,11 @@ class backtrack():
         self.results = results_sim
         return results_sim
 
-
     def save_results(self, fileprefix='./'):
         save_dict = {'med':self.run_median, 'quant':self.run_quant, 'results':self.results}
         target_label = self.target_name.replace(' ','_')
         file_name = f'{fileprefix}{target_label}_dynestyrun_results.pkl'
         pickle.dump(save_dict, open(file_name, "wb"))
-
 
     def load_results(self, fileprefix='./'):
         target_label = self.target_name.replace(' ','_')
@@ -478,12 +480,11 @@ class backtrack():
         self.run_quant = save_dict['quant']
         self.results = save_dict['results']
 
-
-    def generate_plots(self,daysback=2600,daysforward=1200,fileprefix='./tests/'):
+    def generate_plots(self, days_backward=5.*365., days_forward=5.*365., plot_radec=False, fileprefix='./plots/'):
         """
         """
         diagnos = diagnostic(self)
         plx_prior(self)
         post = posterior(self)
-        tracks = trackplot(self,daysback=daysback,daysforward=daysforward)
+        tracks = trackplot(self, days_backward=days_backward, days_forward=days_forward, plot_radec=plot_radec)
         hood = neighborhood(self)
