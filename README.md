@@ -21,3 +21,10 @@ git clone https://github.com/wbalmer/backtrack.git
 cd backtrack
 pip install -e .
 ```
+
+Then, test your installation (takes a while to sample fully):
+
+```
+cd tests
+python hd131399a.py
+```
