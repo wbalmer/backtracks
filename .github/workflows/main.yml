@@ -24,15 +24,17 @@ jobs:
           sudo apt-get install pandoc
           pip install --upgrade pip
           pip install --upgrade numpy cython
+          ls
+          pwd
           git clone https://github.com/sblunt/orbitize.git
           ls
           pwd
-          export PYTHONPATH=$HOME/orbitize
+          export PYTHONPATH=$HOME/work/backtrack/orbitize
           echo $PYTHONPATH
           pip install flake8 pytest pytest-cov sphinx
           # pip install -r requirements.txt
           cat requirements.txt | xargs -n 8 pip install
-          pip install .
+          pip install --no-dependencies .
 
       - name: Lint with flake8
         run: |
