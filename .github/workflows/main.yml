@@ -23,13 +23,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install --upgrade numpy cython
-          git clone git@github.com:sblunt/orbitize.git
-          pwd
-          ls
-          cd orbitize
-          ls
-          pwd
-          pip install .
+          pip install https://github.com/tomasstolker/orbitize.git
 
       - name: Install dependencies
         run: |
