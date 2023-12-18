@@ -35,6 +35,7 @@ jobs:
           echo $PYTHONPATH
 
       - name: Install backtracks
+        run: |
           cd $HOME/work/backtrack/backtrack
           ls
           pwd
