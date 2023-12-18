@@ -391,16 +391,16 @@ def stationtrackplot(backtracks, ref_epoch, daysback=2600, daysforward=1200, fil
     sep,pa=orbitize.system.radec2seppa(backtracks.ras[~corr_terms],backtracks.decs[~corr_terms])
     sep_err=0.5*backtracks.raserr[~corr_terms]+0.5*backtracks.decserr[~corr_terms]
     pa_err=np.degrees(sep_err/sep)
-    axs['B'].errorbar(data_times.decimalyear[~corr_terms],sep,yerr=sep_err,color="tomato",linestyle="", zorder=5)
-    axs['C'].errorbar(data_times.decimalyear[~corr_terms],pa,yerr=pa_err,color="tomato",linestyle="", zorder=5)
+    axs['B'].errorbar(obs_times.decimalyear[~corr_terms],sep,yerr=sep_err,color="tomato",linestyle="", zorder=5)
+    axs['C'].errorbar(obs_times.decimalyear[~corr_terms],pa,yerr=pa_err,color="tomato",linestyle="", zorder=5)
 
     # plot the corr_terms datapoints with a conversion in the sep and PA plots
     sep, pa = orbitize.system.radec2seppa(backtracks.ras[corr_terms],backtracks.decs[corr_terms])
     for i in np.arange(np.sum(corr_terms)):
         sep_err,pa_err,rho2 = orbitize.system.transform_errors(ras[corr_terms][i], backtracks.decs[corr_terms][i],
                                                                backtracks.raserr[corr_terms][i], backtracks.decserr[corr_terms][i], backtracks.rho[corr_terms][i], orbitize.system.radec2seppa)
-        axs['B'].errorbar(data_times.decimalyear[corr_terms][i], sep[i], yerr=sep_err, color="tomato", linestyle="", marker='.', zorder=5)
-        axs['C'].errorbar(data_times.decimalyear[corr_terms][i], pa[i], yerr=pa_err, color="tomato", linestyle="", marker='.', zorder=5)
+        axs['B'].errorbar(obs_times.decimalyear[corr_terms][i], sep[i], yerr=sep_err, color="tomato", linestyle="", marker='.', zorder=5)
+        axs['C'].errorbar(obs_times.decimalyear[corr_terms][i], pa[i], yerr=pa_err, color="tomato", linestyle="", marker='.', zorder=5)
 
     axs['A'].legend()
 
