@@ -23,7 +23,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install --upgrade numpy cython
-          pip install https://github.com/tomasstolker/orbitize.git
+          pip install git+https://github.com/sblunt/orbitize.git
 
       - name: Install dependencies
         run: |
