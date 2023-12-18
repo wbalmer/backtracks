@@ -35,6 +35,9 @@ jobs:
       - name: Install backtracks
         run: |
           # requirements.txt without orbitize
+          pwd
+          ls
+          ls backtrack
           pip install -r .github/workflows/requirements.txt
           export PYTHONPATH=$PYTHONPATH:$HOME/work/backtrack/backtrack
 
