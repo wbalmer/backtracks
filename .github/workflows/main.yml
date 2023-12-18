@@ -25,23 +25,30 @@ jobs:
           pip install --upgrade pip
           pip install --upgrade numpy cython
           pip install flake8 pytest pytest-cov sphinx
+
+      - name: Install orbitize
+        run: |
           cd $HOME
-          ls
-          pwd
           git clone https://github.com/sblunt/orbitize.git
-          ls
-          pwd
           export PYTHONPATH=$HOME/orbitize
-          echo $PYTHONPATH
 
       - name: Install backtracks
         run: |
+          pwd
+          ls
           cd $HOME/work/backtrack/backtrack
           ls
+          ls backtrack
           pwd
           # pip install -r requirements.txt
+          # pip install .
+          cd $HOME
+          git clone https://github.com/wbalmer/backtrack.git
+          cd backtrack
+          ls
+          pwd
           cat requirements.txt | xargs -n 8 pip install
-          pip install --no-dependencies .
+          export PYTHONPATH=$PYTHONPATH:$HOME/orbitize
 
       - name: Lint with flake8
         run: |
