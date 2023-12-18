@@ -27,7 +27,7 @@ jobs:
           pip install flake8 pytest pytest-cov sphinx
           # Install requirements.txt without orbitize
           pip install -r .github/workflows/requirements.txt
-          git clone https://github.com/sblunt/orbitize.git $HOME
+          git clone https://github.com/sblunt/orbitize.git $HOME/orbitize
           pip install -r $HOME/orbitize/requirements.txt
           ls $HOME
           pwd
