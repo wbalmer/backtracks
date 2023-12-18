@@ -36,7 +36,10 @@ jobs:
         run: |
           # Install requirements.txt without orbitize
           pip install -r .github/workflows/requirements.txt
-          export PYTHONPATH=$PYTHONPATH:$HOME/work/backtrack/backtrack
+          pwd
+          ls
+          ls backtracks
+          export PYTHONPATH=$PYTHONPATH:$HOME/work/backtrack/backtrack/backtracks
 
       - name: Lint with flake8
         run: |
