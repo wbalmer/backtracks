@@ -316,7 +316,7 @@ class system():
 
         return param
 
-    def fit(self, dlogz=0.1, npool=4, dynamic=False, nlive=500, mpi_pool=False, resume=False):
+    def fit(self, dlogz=0.1, npool=4, dynamic=False, nlive=500, mpi_pool=False, resume=False, sample_method='unif'):
         """
         """
         print('[BACKTRACK INFO]: Beginning sampling, I hope')
@@ -337,7 +337,7 @@ class system():
                             prior_transform=pool.prior_transform,
                             ndim=ndim,
                             pool=pool,
-                            # sample='rwalk',
+                            sample=sample_method,
                         )
 
                     dsampler.run_nested(
@@ -361,7 +361,7 @@ class system():
                             ndim=ndim,
                             pool=pool,
                             nlive=nlive,
-                            # sample='rwalk',
+                            sample=sample_method,
                         )
 
                     dsampler.run_nested(
@@ -390,6 +390,7 @@ class system():
                         prior_transform=self.prior_transform,
                         ndim=ndim,
                         pool=pool,
+                        sample=sample_method,
                     )
 
                 dsampler.run_nested(
@@ -413,6 +414,7 @@ class system():
                         ndim=ndim,
                         pool=pool,
                         nlive=nlive,
+                        sample=sample_method,
                     )
 
                 dsampler.run_nested(

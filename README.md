@@ -1,4 +1,4 @@
-# backtrack
+# backtracks
 Python package to fit relative astrometry with background star motion tracks.
 
 Written by Gilles Otten (@gotten), William Balmer (@wbalmer), and Tomas Stolker (@tomasstolker).
@@ -9,11 +9,11 @@ Current example (HD131399Ab) uses data from Wagner+22 and Nielsen+17. Thank you 
 
 Log-likelihood borrowed heavily from `orbitize!` (BSD 3-clause).
 
-Currently requires and python 3.9 ish and `astropy`, `corner`, `dynesty`, `matplotlib`, `numpy`, `novas`, `novas_de405`, `orbitize` and their dependencies. Note that `novas` is not supported on Windows. You can create a working environment using conda+pip via a few lines of code:
+Currently requires and python >3.9,<3.11 and `astropy`, `corner`, `dynesty`, `matplotlib`, `numpy`, `novas`, `novas_de405`, `orbitize` and their dependencies. Note that `novas` is not supported on Windows (I use WSL for Windows to develop the code!). You can create a working environment using conda+pip via a few lines of code:
 
 ```
-conda create python=3.9 -n backtrack
-conda activate backtrack
+conda create python=3.11 -n backtracks
+conda activate backtracks
 conda install pip
 pip install backtracks
 ```
@@ -28,8 +28,8 @@ python hd131339a.py
 or, to clone the repo and install in development mode (we recommend this, as the code is a work in progress and you can easily fix bugs you will likely encounter this way):
 
 ```
-conda create python=3.9 -n backtrack
-conda activate backtrack
+conda create python=3.11 -n backtracks
+conda activate backtracks
 conda install pip
 git clone https://github.com/wbalmer/backtrack.git
 cd backtrack
