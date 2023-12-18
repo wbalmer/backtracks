@@ -18,5 +18,7 @@ bgstar_emcee.py
 .pytest_cache/
 tests/HD_131399_A_*.png
 tests/HD_131399_A_dynestyrun_results.pkl
-tests/gaia_query_6204835284262018688.fits
 tests/dynesty.save
+tests/yses2*
+tests/YSES_2*
+tests/gaia_query_*
