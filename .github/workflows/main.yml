@@ -19,17 +19,18 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install orbitize
+      - name: Install numpy cython
         run: |
           pip install --upgrade pip
           pip install --upgrade numpy cython
+
+      - name: Install orbitize
+        run: |
           pip install git+https://github.com/sblunt/orbitize.git
 
       - name: Install dependencies
         run: |
           sudo apt-get install pandoc
-
-          pip install numpy cython
           pip install flake8 pytest pytest-cov sphinx
           pip install -r requirements.txt
           pip install .
