@@ -1,0 +1,12 @@
+astropy
+astroquery
+corner
+dynesty
+matplotlib
+numpy
+novas
+novas_de405
+pandas
+seaborn
+schwimmbad
+scipy
