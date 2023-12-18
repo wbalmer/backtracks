@@ -34,21 +34,10 @@ jobs:
 
       - name: Install backtracks
         run: |
-          pwd
-          ls
-          cd $HOME/work/backtrack/backtrack
-          ls
-          ls backtrack
-          pwd
           # pip install -r requirements.txt
           # pip install .
-          cd $HOME
-          git clone https://github.com/wbalmer/backtrack.git
-          cd backtrack
-          ls
-          pwd
           cat requirements.txt | xargs -n 8 pip install
-          export PYTHONPATH=$PYTHONPATH:$HOME/orbitize
+          export PYTHONPATH=$PYTHONPATH:$HOME/work/backtrack/backtrack
 
       - name: Lint with flake8
         run: |
