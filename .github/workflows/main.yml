@@ -34,9 +34,8 @@ jobs:
 
       - name: Install backtracks
         run: |
-          # pip install -r requirements.txt
-          # pip install .
-          cat requirements.txt | xargs -n 8 pip install
+          # requirements.txt without orbitize
+          pip install -r .github/workflows/requirements.txt
           export PYTHONPATH=$PYTHONPATH:$HOME/work/backtrack/backtrack
 
       - name: Lint with flake8
