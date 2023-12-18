@@ -23,7 +23,8 @@ jobs:
         run: |
           sudo apt-get install pandoc
           pip install --upgrade pip
-          pip install flake8 pytest pytest-cov sphinx numpy
+          pip install numpy cython
+          pip install flake8 pytest pytest-cov sphinx
           pip install -r requirements.txt
           pip install .
 
