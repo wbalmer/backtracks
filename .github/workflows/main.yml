@@ -24,14 +24,20 @@ jobs:
           sudo apt-get install pandoc
           pip install --upgrade pip
           pip install --upgrade numpy cython
+          pip install flake8 pytest pytest-cov sphinx
+          cd $HOME
           ls
           pwd
           git clone https://github.com/sblunt/orbitize.git
           ls
           pwd
-          export PYTHONPATH=$HOME/work/backtrack/orbitize
+          export PYTHONPATH=$HOME/orbitize
           echo $PYTHONPATH
-          pip install flake8 pytest pytest-cov sphinx
+
+      - name: Install backtracks
+          cd $HOME/work/backtrack/backtrack
+          ls
+          pwd
           # pip install -r requirements.txt
           cat requirements.txt | xargs -n 8 pip install
           pip install --no-dependencies .
