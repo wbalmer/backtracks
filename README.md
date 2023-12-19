@@ -1,5 +1,22 @@
 # backtracks
+<<<<<<< Updated upstream
 Python package to fit relative astrometry with background star motion tracks.
+=======
+
+.. image:: https://img.shields.io/pypi/v/backtracks
+   :target: https://pypi.python.org/pypi/backtracks
+
+.. image:: https://github.com/wbalmer/backtracks/actions/workflows/main.yml/badge.svg
+   :target: https://github.com/wbalmer/backtracks/actions
+
+.. image:: https://img.shields.io/readthedocs/backtracks
+   :target: http://backtracks.readthedocs.io
+
+.. image:: https://img.shields.io/github/license/wbalmer/backtracks
+   :target: https://github.com/wbalmer/backtracks/blob/main/LICENSE
+
+:stars: Python package to fit relative astrometry with background star motion tracks.
+>>>>>>> Stashed changes
 
 Written by Gilles Otten (@gotten), William Balmer (@wbalmer), and Tomas Stolker (@tomasstolker).
 
@@ -8,6 +25,7 @@ eDR3 Distance prior summary file from this [source](https://arxiv.org/pdf/2012.0
 Current example (HD131399Ab) uses data from Wagner+22 and Nielsen+17. Thank you to Kevin Wagner for providing the latest astrometry!
 
 Log-likelihood borrowed heavily from `orbitize!` (BSD 3-clause).
+<<<<<<< Updated upstream
 
 Currently requires and python >3.9,<3.11 and `astropy`, `corner`, `dynesty`, `matplotlib`, `numpy`, `novas`, `novas_de405`, `orbitize` and their dependencies. Note that `novas` is not supported on Windows (I use WSL for Windows to develop the code!). You can create a working environment using conda+pip via a few lines of code:
 
@@ -42,3 +60,5 @@ Then, test your installation (takes a while to sample fully):
 cd tests
 python hd131399a.py
 ```
+=======
+>>>>>>> Stashed changes

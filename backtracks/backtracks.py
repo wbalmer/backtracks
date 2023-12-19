@@ -28,6 +28,7 @@ from astropy.io import fits
 from astropy.time import Time
 from astroquery.gaia import Gaia
 from astroquery.simbad import Simbad
+from matplotlib.pyplot import Figure
 from novas.compat.eph_manager import ephem_open
 
 from schwimmbad import MPIPool
@@ -316,7 +317,11 @@ class system():
 
         return param
 
+<<<<<<< Updated upstream
     def fit(self, dlogz=0.1, npool=4, dynamic=False, nlive=500, mpi_pool=False, resume=False, sample_method='unif'):
+=======
+    def fit(self, dlogz=0.5, npool=4, dynamic=False, nlive=200, mpi_pool=False, resume=False):
+>>>>>>> Stashed changes
         """
         """
         print('[BACKTRACK INFO]: Beginning sampling, I hope')
@@ -459,7 +464,7 @@ class system():
             plot_stationary: bool = False,
             fileprefix: str = './',
             filepost: str = '.pdf',
-        ):
+        ) -> Tuple[Figure, Figure, Figure, Figure, Figure]:
         """
         """
         if ref_epoch is None:
@@ -469,11 +474,7 @@ class system():
         else:
             ref_epoch = Time(f'{ref_epoch[0]}-{ref_epoch[1]}-{ref_epoch[2]}T12:00:00', format='isot')
 
-        diagnos = diagnostic(self, fileprefix=fileprefix, filepost=filepost)
-        plx_prior(self, fileprefix=fileprefix, filepost=filepost)
-        post = posterior(self, fileprefix=fileprefix, filepost=filepost)
-
-        tracks = trackplot(
+        fig_track = trackplot(
             self,
             ref_epoch=ref_epoch.jd,
             days_backward=days_backward,
@@ -485,4 +486,9 @@ class system():
             filepost=filepost
         )
 
-        hood = neighborhood(self, fileprefix=fileprefix, filepost=filepost)
+        fig_post = posterior(self, fileprefix=fileprefix, filepost=filepost)
+        fig_diag = diagnostic(self, fileprefix=fileprefix, filepost=filepost)
+        fig_prior = plx_prior(self, fileprefix=fileprefix, filepost=filepost)
+        fig_hood = neighborhood(self, fileprefix=fileprefix, filepost=filepost)
+
+        return fig_track, fig_post, fig_diag, fig_prior, fig_hood
