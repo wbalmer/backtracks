@@ -317,11 +317,7 @@ class System():
 
         return param
 
-<<<<<<< Updated upstream
-    def fit(self, dlogz=0.1, npool=4, dynamic=False, nlive=500, mpi_pool=False, resume=False, sample_method='unif'):
-=======
-    def fit(self, dlogz=0.5, npool=4, dynamic=False, nlive=200, mpi_pool=False, resume=False):
->>>>>>> Stashed changes
+    def fit(self, dlogz=0.5, npool=4, dynamic=False, nlive=200, mpi_pool=False, resume=False, sample_method='unif'):
         """
         """
         print('[BACKTRACK INFO]: Beginning sampling, I hope')
