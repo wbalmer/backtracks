@@ -10,7 +10,6 @@ backtracks.egg-info/
 coverage.xml
 htmlcov/
 .tox/
-*.ipynb*
 bgstar_emcee.py
 *beta_pic*
 *SAO*

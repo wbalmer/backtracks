@@ -1,6 +1,7 @@
 import os
 import pytest
 
+import dynesty
 from backtracks import system
 
 class TestBacktracks:
@@ -39,9 +40,8 @@ class TestBacktracks:
     def test_fit(self) -> None:
 
         results = self.bt_system.fit(dlogz=0.5, npool=4, dynamic=False, mpi_pool=False, nlive=100, resume=False)
-        print(type(results))
 
-        # assert isinstance(results, system)
+        assert isinstance(results, dynesty.utils.Results)
 
     def test_save(self) -> None:
 
