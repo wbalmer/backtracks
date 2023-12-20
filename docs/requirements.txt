@@ -1,0 +1,6 @@
+jupyter
+nbsphinx
+pandoc
+sphinx-automodapi
+sphinx_book_theme
+sphinx-readable-theme
