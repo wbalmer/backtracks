@@ -2,14 +2,14 @@ import os
 import pytest
 
 import dynesty
-from backtracks import system
+from backtracks import System
 
 class TestBacktracks:
     def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + "/"
 
-        self.bt_system = system(
+        self.bt_system = System(
             "HD 131399 A",
             f"{self.test_dir}scorpions1b_orbitizelike.csv",
             nearby_window=0.5,
@@ -35,7 +35,7 @@ class TestBacktracks:
 
     def test_system(self) -> None:
 
-        assert isinstance(self.bt_system, system)
+        assert isinstance(self.bt_system, System)
 
     def test_fit(self) -> None:
 

@@ -45,8 +45,9 @@ Gaia.ROW_LIMIT = -1
 # TODO: is there a way to account for gaia correlations?
 
 
-class system():
+class System():
     """
+    Class for describing a star system with a companion candidate.
     """
 
     def __init__(self, target_name: str, candidate_file: str, nearby_window: float = 0.5, fileprefix='./', **kwargs):
