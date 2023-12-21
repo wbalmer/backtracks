@@ -7,8 +7,8 @@ Currently requires and python 3.9 ish and `astropy`, `corner`, `dynesty`, `matpl
 
 .. code-block:: console
 
-    $ conda create python=3.9 -n backtrack
-    $ conda activate backtrack
+    $ conda create python=3.9 -n backtracks
+    $ conda activate backtracks
     $ conda install pip
     $ pip install backtracks
 
@@ -16,11 +16,11 @@ Or, to clone the repo and install in development mode (we recommend this, as the
 
 .. code-block:: console
 
-    $ conda create python=3.9 -n backtrack
-    $ conda activate backtrack
+    $ conda create python=3.9 -n backtracks
+    $ conda activate backtracks
     $ conda install pip
-    $ git clone https://github.com/wbalmer/backtrack.git
-    $ cd backtrack
+    $ git clone https://github.com/wbalmer/backtracks.git
+    $ cd backtracks
     $ pip install -e .
 
 Then, test your installation:
