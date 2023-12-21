@@ -21,4 +21,5 @@ tests/HD_131399_A_dynestyrun_results.pkl
 tests/dynesty.save
 tests/yses2*
 tests/YSES_2*
+tests/sao206463*
 tests/gaia_query_*

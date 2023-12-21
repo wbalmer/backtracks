@@ -2,7 +2,7 @@
 # authors: Gilles Otten, William Balmer
 
 # special packages needed: astropy, matplotlib, numpy, novas, novas_de405,
-# dynesty, emcee, orbitize, corner (potentially cython and tqdm if clean pip install crashes)
+# dynesty, emcee, corner (potentially cython and tqdm if clean pip install crashes)
 
 # this code does an analysis with a background star model given delta RA and
 # delta DEC datapoints of a point source wrt a host star
@@ -41,7 +41,7 @@ Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"  # Select Data Release 3, default
 # TODO: is there a way to account for gaia correlations?
 
 
-class system():
+class System():
     """
     """
 
