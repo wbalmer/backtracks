@@ -1,4 +1,4 @@
-from backtracks.backtracks import system
+from backtracks.backtracks import System
 
 __author__ = "William Balmer"
 __license__ = "BSD-3"
