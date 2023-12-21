@@ -354,8 +354,8 @@ def stationtrackplot(backtracks, ref_epoch, daysback=2600, daysforward=1200, fil
     plot_epochs=np.arange(daysforward)+ref_epoch-daysback # 4000 days of epochs to evaluate position at
     plot_epochs_tt=utc2tt(plot_epochs)
 
-    plot_times = Time(plot_epochs, format='jd',scale="utc")
-    obs_times = Time(backtracks.epochs, format='jd',scale="tt")
+    plot_times = Time(plot_epochs, format='jd')
+    obs_times = Time(backtracks.epochs, format='jd')
 
     post_samples = backtracks.results.samples
     best_pars = np.array(backtracks.run_median).T[0]
