@@ -41,4 +41,5 @@ jobs:
 
       - name: Run pytest
         run: |
+          export PYTHONPATH=$HOME/work/backtracks/backtracks/
           pytest
