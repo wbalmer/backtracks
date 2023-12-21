@@ -6,7 +6,6 @@ matplotlib
 numpy
 novas
 novas_de405
-orbitize
 pandas
 seaborn
 schwimmbad
