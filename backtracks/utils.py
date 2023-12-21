@@ -4,7 +4,7 @@ import orbitize.system
 import numpy as np
 from scipy.stats import norm
 from scipy.special import gammainc, gammaincc, gammainccinv, gammaincinv
-
+from astropy.time import Time
 
 def pol2car(sep, pa, seperr, paerr, corr=np.nan):
     ra, dec = orbitize.system.seppa2radec(sep, pa)
@@ -23,6 +23,8 @@ def transform_normal(x, mu, sigma):
 def transform_gengamm(x, L=1.35e3, alpha=1, beta=2):
     return L*(gammaincinv((beta+1)/alpha,x)**(1/alpha))
 
+def utc2tt(jd_utc):
+    return Time(jd_utc,scale="utc",format="jd").tt.jd
 
 # plx_pdf = lambda par,L : (par**(-4))*np.exp(-1/(par*L))
 #
