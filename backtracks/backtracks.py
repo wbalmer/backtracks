@@ -32,7 +32,7 @@ from novas.compat.eph_manager import ephem_open
 
 from schwimmbad import MPIPool
 
-from backtracks.utils import pol2car, transform_gengamm, transform_normal, transform_uniform
+from backtracks.utils import pol2car, transform_gengamm, transform_normal, transform_uniform, utc2tt
 from backtracks.plotting import diagnostic, neighborhood, plx_prior, posterior, trackplot
 
 
@@ -89,6 +89,7 @@ class system():
             astrometry[5, i] += rho2
 
         self.epochs = astrometry[0]
+        self.epochs_tt = utc2tt(astrometry[0])
         self.ras = astrometry[1]
         self.raserr = astrometry[3]
         self.decs = astrometry[2]
@@ -245,7 +246,7 @@ class system():
         return np.array(posx),np.array(posy)
 
     def fmodel(self, param):
-        return self.radecdists(self.epochs, param)
+        return self.radecdists(self.epochs_tt, param)
 
     def loglike(self, param):
         """
