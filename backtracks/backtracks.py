@@ -45,7 +45,7 @@ Gaia.ROW_LIMIT = -1
 # TODO: is there a way to account for gaia correlations?
 
 
-class system():
+class System():
     """
     Class for describing a star system with a companion candidate.
     """
