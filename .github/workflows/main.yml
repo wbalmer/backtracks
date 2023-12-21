@@ -25,10 +25,7 @@ jobs:
           pip install --upgrade pip numpy cython
           pip install flake8 pytest pytest-cov sphinx
           pip install -r docs/requirements.txt
-          # Install requirements.txt without orbitize
-          pip install -r .github/workflows/requirements.txt
-          git clone https://github.com/sblunt/orbitize.git $HOME/orbitize
-          pip install -r $HOME/orbitize/requirements.txt
+          pip install -r requirements.txt
 
       - name: Lint with flake8
         run: |

@@ -35,7 +35,7 @@ class TestBacktracks:
 
     def test_system(self) -> None:
 
-        assert isinstance(self.bt_system, system)
+        assert isinstance(self.bt_system, System)
 
     def test_fit(self) -> None:
 
