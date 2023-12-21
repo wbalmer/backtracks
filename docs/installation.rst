@@ -27,4 +27,4 @@ Then, test your installation:
 
 .. code-block:: python
 
-    >>> from backtracks import system
+    >>> from backtracks import System

@@ -12,7 +12,7 @@ authors = [
   { name="Tomas Stolker", email="stolker@strw.leidenuniv.nl" },
 ]
 description = "Python package to fit relative astrometry with background star motion tracks."
-readme = "README.md"
+readme = "README.rst"
 requires-python = ">=3.9,<3.12"
 dynamic = ["dependencies"]
 classifiers = [
