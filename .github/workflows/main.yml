@@ -44,5 +44,5 @@ jobs:
 
       - name: Run pytest
         run: |
-          export PYTHONPATH=$HOME/orbitize:$HOME/work/backtrack/backtrack/
+          export PYTHONPATH=$HOME/orbitize:$HOME/work/backtracks/backtracks/
           pytest
