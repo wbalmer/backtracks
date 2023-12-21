@@ -3,7 +3,7 @@
 Installation
 ============
 
-Currently requires and python 3.9 ish and `astropy`, `corner`, `dynesty`, `matplotlib`, `numpy`, `novas`, `novas_de405`, `orbitize` and their dependencies. Note that `novas` is not supported on Windows. You can create a working environment using conda+pip via a few lines of code:
+Currently requires and python 3.9 ish and `astropy`, `corner`, `dynesty`, `matplotlib`, `numpy`, `novas`, `novas_de405`, and their dependencies. Note that `novas` is not supported on Windows. You can create a working environment using conda+pip via a few lines of code:
 
 .. code-block:: console
 

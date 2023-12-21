@@ -23,5 +23,5 @@ classifiers = [
 dependencies = { file = ["requirements.txt"] }
 
 [project.urls]
-Homepage = "https://github.com/wbalmer/backtrack"
-Issues = "https://github.com/wbalmer/backtrack/issues"
+Homepage = "https://github.com/wbalmer/backtracks"
+Issues = "https://github.com/wbalmer/backtracks/issues"

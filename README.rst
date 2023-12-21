@@ -1,5 +1,5 @@
-*backtracks*
-============
+backtracks
+==========
 
 .. image:: https://img.shields.io/pypi/v/backtracks
    :target: https://pypi.python.org/pypi/backtracks
@@ -13,7 +13,7 @@
 .. image:: https://img.shields.io/github/license/wbalmer/backtracks
    :target: https://github.com/wbalmer/backtracks/blob/main/LICENSE
 
-:stars: Python package to fit relative astrometry with background helical motion tracks, to discern directly imaged planets :ringed_planet: from contaminant sources.
+Python package to fit relative astrometry with background helical motion tracks, to discern directly imaged planets :ringed_planet: from contaminant sources :stars:
 
 Written by Gilles Otten (@gotten), William Balmer (@wbalmer), and Tomas Stolker (@tomasstolker).
 
@@ -40,7 +40,7 @@ Log-likelihood and some utility functions borrowed heavily from `orbitize!` (BSD
 Installation
 ============
 
-Currently requires and python 3.9 ish and `astropy`, `corner`, `dynesty`, `matplotlib`, `numpy`, `novas`, `novas_de405`, `orbitize` and their dependencies. Note that `novas` is not supported on Windows. You can create a working environment using conda+pip via a few lines of code:
+Currently requires and python 3.9 ish and `astropy`, `corner`, `dynesty`, `matplotlib`, `numpy`, `novas`, `novas_de405`, and their dependencies. Note that `novas` is not supported on Windows. (but W.B. uses WSL to develop this code, and would recommend it!) You can create a working environment using conda+pip via a few lines of code:
 
 .. code-block:: console
 
