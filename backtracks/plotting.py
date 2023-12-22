@@ -10,8 +10,7 @@ from astropy.time import Time
 from dynesty import plotting as dyplot
 from matplotlib.ticker import FuncFormatter
 
-from backtracks.utils import transform_gengamm, radec2seppa, seppa2radec, transform_errors
-
+from backtracks.utils import transform_gengamm, radec2seppa, seppa2radec, transform_errors, utc2tt
 
 plt.style.use('default')
 plt.rcParams['figure.figsize'] = [9., 6.]
@@ -121,7 +120,7 @@ def trackplot(
     # Epochs for the background tracks
 
     plot_epochs = ref_epoch + np.arange(-days_backward, days_forward, step_size)
-
+    plot_epochs_tt=utc2tt(plot_epochs)
     # Create astropy times for observations and background model
 
     plot_times = Time(plot_epochs, format='jd')
@@ -137,7 +136,7 @@ def trackplot(
         stat_pars = backtracks.run_median.copy()
         stat_pars[2:] = 0.0
 
-        ra_stat, dec_stat = backtracks.radecdists(plot_epochs, stat_pars)
+        ra_stat, dec_stat = backtracks.radecdists(plot_epochs_tt, stat_pars)
         axs['A'].plot(ra_stat, dec_stat, color="lightgray", label="stationary background", ls='--')
 
         if plot_radec:
@@ -159,7 +158,7 @@ def trackplot(
     dec_samples = np.zeros((n_samples, plot_epochs.size))
 
     for i, idx_item in enumerate(random_idx):
-        ra_samples[i, ], dec_samples[i, ] = backtracks.radecdists(plot_epochs, post_samples[idx_item, ])
+        ra_samples[i, ], dec_samples[i, ] = backtracks.radecdists(plot_epochs_tt, post_samples[idx_item, ])
         axs['A'].plot(ra_samples[i, ], dec_samples[i, ], color='cornflowerblue', lw=0.3, alpha=0.3)
 
     # Create 1 sigma and 3 sigma percentiles for envelopes
@@ -190,7 +189,7 @@ def trackplot(
 
     # Plot background track with best-fit parameters
 
-    ra_bg, dec_bg = backtracks.radecdists(plot_epochs, backtracks.run_median)
+    ra_bg, dec_bg = backtracks.radecdists(plot_epochs_tt, backtracks.run_median)
 
     axs['A'].plot(ra_bg, dec_bg, color="black", label="best model")
 
@@ -205,7 +204,7 @@ def trackplot(
 
     # Connect data points with best-fit model epochs
 
-    ra_bg_best, dec_bg_best = backtracks.radecdists(backtracks.epochs, backtracks.run_median)
+    ra_bg_best, dec_bg_best = backtracks.radecdists(backtracks.epochs_tt, backtracks.run_median)
 
     for i in range(len(backtracks.ras)):
         comp_ra = (backtracks.ras[i], ra_bg_best[i])
@@ -351,6 +350,7 @@ def stationtrackplot(backtracks, ref_epoch, daysback=2600, daysforward=1200, fil
         figsize=(16,8))
 
     plot_epochs=np.arange(daysforward)+ref_epoch-daysback # 4000 days of epochs to evaluate position at
+    plot_epochs_tt=utc2tt(plot_epochs)
 
     plot_times = Time(plot_epochs, format='jd')
     obs_times = Time(backtracks.epochs, format='jd')
@@ -362,8 +362,8 @@ def stationtrackplot(backtracks, ref_epoch, daysback=2600, daysforward=1200, fil
     corr_terms=~np.isnan(backtracks.rho) # corr_terms is everywhere where rho is not a nan.
 
     # plot stationary bg track at infinity (0 parallax)
-    rasbg,decbg = backtracks.radecdists(plot_epochs, best_pars[0],best_pars[1],0,0,0) # retrieve coordinates at full range of epochs
-    # rasbg,decbg = backtracks.radecdists(plot_epochs, backtracks.ra0, backtracks.dec0, 0,0,0) # retrieve coordinates at full range of epochs
+    rasbg,decbg = backtracks.radecdists(plot_epochs_tt, best_pars[0],best_pars[1],0,0,0) # retrieve coordinates at full range of epochs
+    # rasbg,decbg = backtracks.radecdists(plot_epochs_tt, backtracks.ra0, backtracks.dec0, 0,0,0) # retrieve coordinates at full range of epochs
 
     axs['B'].plot(plot_times.decimalyear,radec2seppa(rasbg,decbg)[0],color='gray',alpha=1, zorder=3,ls='--')
     axs['C'].plot(plot_times.decimalyear,radec2seppa(rasbg,decbg)[1],color='gray',alpha=1, zorder=3,ls='--')
