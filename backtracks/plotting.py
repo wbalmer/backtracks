@@ -3,7 +3,6 @@
 import corner
 import matplotlib.pyplot as plt
 import numpy as np
-import orbitize.system
 import pandas as pd
 import seaborn as sb
 
@@ -11,8 +10,7 @@ from astropy.time import Time
 from dynesty import plotting as dyplot
 from matplotlib.ticker import FuncFormatter
 
-from backtracks.utils import transform_gengamm, utc2tt
-
+from backtracks.utils import transform_gengamm, radec2seppa, seppa2radec, transform_errors, utc2tt
 
 plt.style.use('default')
 plt.rcParams['figure.figsize'] = [9., 6.]
@@ -101,7 +99,7 @@ def posterior(backtracks, fileprefix='./', filepost='.pdf'):
 
 def trackplot(
         backtracks,
-        ref_epoch, 
+        ref_epoch,
         days_backward=3.*365.,
         days_forward=3.*365.,
         step_size=10.,
@@ -137,7 +135,7 @@ def trackplot(
     if plot_stationary:
         stat_pars = backtracks.run_median.copy()
         stat_pars[2:] = 0.0
-        
+
         ra_stat, dec_stat = backtracks.radecdists(plot_epochs_tt, stat_pars)
         axs['A'].plot(ra_stat, dec_stat, color="lightgray", label="stationary background", ls='--')
 
@@ -145,7 +143,7 @@ def trackplot(
             axs['B'].plot(plot_times.decimalyear, ra_stat, color="lightgray", ls='--')
             axs['C'].plot(plot_times.decimalyear, dec_stat, color="lightgray", ls='--')
         else:
-            sep_stat, pa_stat = orbitize.system.radec2seppa(ra_stat, dec_stat)
+            sep_stat, pa_stat = radec2seppa(ra_stat, dec_stat)
             axs['B'].plot(plot_times.decimalyear, sep_stat, color='lightgray', ls='--')
             axs['C'].plot(plot_times.decimalyear, pa_stat, color='lightgray', ls='--')
 
@@ -170,10 +168,10 @@ def trackplot(
 
     # Convert quantile tracks to sep and PA
 
-    sep_q1, pa_q1 = orbitize.system.radec2seppa(ra_quant[0, ], dec_quant[0, ])
-    sep_q2, pa_q2 = orbitize.system.radec2seppa(ra_quant[1, ], dec_quant[1, ])
-    sep_q3, pa_q3 = orbitize.system.radec2seppa(ra_quant[2, ], dec_quant[2, ])
-    sep_q4, pa_q4 = orbitize.system.radec2seppa(ra_quant[3, ], dec_quant[3, ])
+    sep_q1, pa_q1 = radec2seppa(ra_quant[0, ], dec_quant[0, ])
+    sep_q2, pa_q2 = radec2seppa(ra_quant[1, ], dec_quant[1, ])
+    sep_q3, pa_q3 = radec2seppa(ra_quant[2, ], dec_quant[2, ])
+    sep_q4, pa_q4 = radec2seppa(ra_quant[3, ], dec_quant[3, ])
 
     # Plot quantile envelopes for RA/Dec or sep/PA
 
@@ -200,7 +198,7 @@ def trackplot(
         axs['C'].plot(plot_times.decimalyear, dec_bg, color='black')
 
     else:
-        sep_best, pa_best = orbitize.system.radec2seppa(ra_bg, dec_bg)
+        sep_best, pa_best = radec2seppa(ra_bg, dec_bg)
         axs['B'].plot(plot_times.decimalyear, sep_best, color='black')
         axs['C'].plot(plot_times.decimalyear, pa_best, color='black')
 
@@ -247,7 +245,7 @@ def trackplot(
         if np.sum(~corr_terms) > 0:
             # Plot the sep and PA data points that are not corr_terms
 
-            obs_sep, obs_pa = orbitize.system.radec2seppa(backtracks.ras[~corr_terms], backtracks.decs[~corr_terms])
+            obs_sep, obs_pa = radec2seppa(backtracks.ras[~corr_terms], backtracks.decs[~corr_terms])
             obs_sep_err = 0.5*backtracks.raserr[~corr_terms] + 0.5*backtracks.decserr[~corr_terms]
             obs_pa_err = np.degrees(obs_sep_err/obs_sep)
 
@@ -264,17 +262,17 @@ def trackplot(
         if np.sum(corr_terms) > 0:
             # Plot the sep and PA data points that are corr_terms
 
-            obs_sep, obs_pa = orbitize.system.radec2seppa(backtracks.ras[corr_terms], backtracks.decs[corr_terms])
+            obs_sep, obs_pa = radec2seppa(backtracks.ras[corr_terms], backtracks.decs[corr_terms])
 
             obs_sep_err = np.zeros(obs_sep.size)
             obs_pa_err = np.zeros(obs_sep.size)
 
             for i in np.arange(np.sum(corr_terms)):
                 # Transform the uncertainties from RA/Dec to sep/PA
-                obs_sep_err[i], obs_pa_err[i], _ = orbitize.system.transform_errors(
+                obs_sep_err[i], obs_pa_err[i], _ = transform_errors(
                     backtracks.ras[corr_terms][i], backtracks.decs[corr_terms][i],
                     backtracks.raserr[corr_terms][i], backtracks.decserr[corr_terms][i],
-                    backtracks.rho[corr_terms][i], orbitize.system.radec2seppa)
+                    backtracks.rho[corr_terms][i], radec2seppa)
 
             axs['B'].errorbar(obs_times[corr_terms].decimalyear, obs_sep,
                               yerr=obs_sep_err, color="tab:gray",
@@ -367,8 +365,8 @@ def stationtrackplot(backtracks, ref_epoch, daysback=2600, daysforward=1200, fil
     rasbg,decbg = backtracks.radecdists(plot_epochs_tt, best_pars[0],best_pars[1],0,0,0) # retrieve coordinates at full range of epochs
     # rasbg,decbg = backtracks.radecdists(plot_epochs_tt, backtracks.ra0, backtracks.dec0, 0,0,0) # retrieve coordinates at full range of epochs
 
-    axs['B'].plot(plot_times.decimalyear,orbitize.system.radec2seppa(rasbg,decbg)[0],color='gray',alpha=1, zorder=3,ls='--')
-    axs['C'].plot(plot_times.decimalyear,orbitize.system.radec2seppa(rasbg,decbg)[1],color='gray',alpha=1, zorder=3,ls='--')
+    axs['B'].plot(plot_times.decimalyear,radec2seppa(rasbg,decbg)[0],color='gray',alpha=1, zorder=3,ls='--')
+    axs['C'].plot(plot_times.decimalyear,radec2seppa(rasbg,decbg)[1],color='gray',alpha=1, zorder=3,ls='--')
 
     axs['A'].plot(rasbg,decbg,color="gray",zorder=3,label="stationary bg",alpha=1,ls='--')
 
@@ -389,17 +387,17 @@ def stationtrackplot(backtracks, ref_epoch, daysback=2600, daysforward=1200, fil
     axs['C'].set_ylabel('PA (degrees)')
 
     # plot the datapoints that are not corr_terms in the sep and PA plots, error calculation taken from Orbitize!
-    sep,pa=orbitize.system.radec2seppa(backtracks.ras[~corr_terms],backtracks.decs[~corr_terms])
+    sep,pa=radec2seppa(backtracks.ras[~corr_terms],backtracks.decs[~corr_terms])
     sep_err=0.5*backtracks.raserr[~corr_terms]+0.5*backtracks.decserr[~corr_terms]
     pa_err=np.degrees(sep_err/sep)
     axs['B'].errorbar(obs_times.decimalyear[~corr_terms],sep,yerr=sep_err,color="tomato",linestyle="", zorder=5)
     axs['C'].errorbar(obs_times.decimalyear[~corr_terms],pa,yerr=pa_err,color="tomato",linestyle="", zorder=5)
 
     # plot the corr_terms datapoints with a conversion in the sep and PA plots
-    sep, pa = orbitize.system.radec2seppa(backtracks.ras[corr_terms],backtracks.decs[corr_terms])
+    sep, pa = radec2seppa(backtracks.ras[corr_terms],backtracks.decs[corr_terms])
     for i in np.arange(np.sum(corr_terms)):
-        sep_err,pa_err,rho2 = orbitize.system.transform_errors(backtracks.ras[corr_terms][i], backtracks.decs[corr_terms][i],
-                                                               backtracks.raserr[corr_terms][i], backtracks.decserr[corr_terms][i], backtracks.rho[corr_terms][i], orbitize.system.radec2seppa)
+        sep_err,pa_err,rho2 = transform_errors(backtracks.ras[corr_terms][i], backtracks.decs[corr_terms][i],
+                                                               backtracks.raserr[corr_terms][i], backtracks.decserr[corr_terms][i], backtracks.rho[corr_terms][i], radec2seppa)
         axs['B'].errorbar(obs_times.decimalyear[corr_terms][i], sep[i], yerr=sep_err, color="tomato", linestyle="", marker='.', zorder=5)
         axs['C'].errorbar(obs_times.decimalyear[corr_terms][i], pa[i], yerr=pa_err, color="tomato", linestyle="", marker='.', zorder=5)
 

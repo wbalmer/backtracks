@@ -37,13 +37,17 @@ from backtracks.utils import pol2car, transform_gengamm, transform_normal, trans
 from backtracks.plotting import diagnostic, neighborhood, plx_prior, posterior, trackplot
 
 
-Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"  # Select Data Release 3, default
+# Set the Gaia data release to DR3
+Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"
+# Retrieve all rows from a Gaia query
+Gaia.ROW_LIMIT = -1
 
 # TODO: is there a way to account for gaia correlations?
 
 
-class system():
+class System():
     """
+    Class for describing a star system with a companion candidate.
     """
 
     def __init__(self, target_name: str, candidate_file: str, nearby_window: float = 0.5, fileprefix='./', **kwargs):
@@ -60,6 +64,16 @@ class system():
             warnings.warn("The jd_tt parameter has been removed. "
                           "Please use the ref_epoch parameter of "
                           "generate_plots instead.")
+
+        if Gaia.MAIN_GAIA_TABLE == "gaiadr3.gaia_source":
+            self.gaia_release = "DR3"
+        elif Gaia.MAIN_GAIA_TABLE == "gaiadr4.gaia_source":
+            self.gaia_release = "DR4"
+        else:
+            raise ValueError("The value of the MAIN_GAIA_TABLE "
+                             f"({Gaia.MAIN_GAIA_TABLE}) is not valid.")
+
+        self.gaia_epoch = None
 
         # planet candidate astrometry
         candidate = pd.read_csv(candidate_file)
@@ -150,16 +164,16 @@ class system():
         # Referred to the International Celestial Reference Frame.
         # Covers JED 2305424.50  (1599 DEC 09)  to  JED 2525008.50  (2201 FEB 20)
 
-        # define reference positions for host star (in this case fixed at the median Gaia DR3 parameters)
+        # define reference positions for host star (in this case fixed at the median Gaia parameters)
         self.host_cat = novas.make_cat_entry(star_name="host",catalog="HIP",star_num=1,ra=self.rao/15.,
                                              dec=self.deco,pm_ra=self.pmrao,pm_dec=self.pmdeco,
                                              parallax=self.paro,rad_vel=self.radvelo)
         print('[BACKTRACK INFO]: made cat entry for host')
-        self.host_icrs = novas.transform_cat(option=1, incat=self.host_cat, date_incat=2016., date_newcat=2000.,
-                                             newcat_id="HIP")
+        self.host_icrs = novas.transform_cat(option=1, incat=self.host_cat, date_incat=self.gaia_epoch,
+                                             date_newcat=2000., newcat_id="HIP")
         print('[BACKTRACK INFO]: transformed cat entry for host')
 
-        # this converts the Epoch from 2016 to 2000 following ICRS,
+        # this converts the Epoch from the Gaia ref_epoch (2016 for DR3) to 2000 following ICRS
 
     def query_astrometry(self, nearby_window: float = 0.5):
         # resolve target in simbad
@@ -167,26 +181,40 @@ class system():
         print(f'[BACKTRACK INFO]: Resolved the target star \'{self.target_name}\' in Simbad!')
         # target_result_table.pprint()
         # get gaia ID from simbad
-        for ID in Simbad.query_objectids(self.target_name)['ID']:
-            if 'Gaia DR3' in ID:
-                gaia_id = int(ID.replace('Gaia DR3', ''))
-                print('[BACKTRACK INFO]: Resolved target\'s Gaia ID from Simbad, Gaia DR3',gaia_id)
+        gaia_id = None
+        for target_id in Simbad.query_objectids(self.target_name)['ID']:
+            if f'Gaia {self.gaia_release}' in target_id:
+                gaia_id = int(target_id.replace(f'Gaia {self.gaia_release}', ''))
+                print('[BACKTRACK INFO]: Resolved target\'s Gaia ID '
+                      f'from Simbad, Gaia {self.gaia_release} {gaia_id}')
+
+        if gaia_id is None:
+            raise ValueError(f"The Gaia source ID for {self.target_name} "
+                             f"is not found in the selected catalog "
+                             f"({Gaia.MAIN_GAIA_TABLE}).")
 
         coord = SkyCoord(ra=target_result_table['RA'][0],
                          dec=target_result_table['DEC'][0],
                          unit=(u.hourangle, u.degree), frame='icrs')
         width = u.Quantity(50, u.arcsec)
         height = u.Quantity(50, u.arcsec)
-        Gaia.ROW_LIMIT = -1
-        columns = ['source_id', 'ra', 'dec', 'pmra', 'pmdec', 'parallax', 'radial_velocity']
+        columns = ['source_id', 'ra', 'dec', 'pmra', 'pmdec', 'parallax', 'radial_velocity', 'ref_epoch']
         target_gaia = Gaia.query_object_async(coordinate=coord, width=width, height=height, columns=columns)
         target_gaia = target_gaia[target_gaia['source_id']==gaia_id]
+        self.gaia_epoch = target_gaia['ref_epoch'][0]
+        print(f'[BACKTRACK INFO]: gathered Gaia {self.gaia_release} data for {self.target_name}')
+        print(f'   * Gaia source ID = {gaia_id}')
+        print(f'   * Reference epoch = {self.gaia_epoch}')
+        print(f'   * RA = {target_gaia["ra"][0]:.4f} deg')
+        print(f'   * Dec = {target_gaia["dec"][0]:.4f} deg')
+        print(f'   * PM RA = {target_gaia["pmra"][0]:.2f} mas/yr')
+        print(f'   * PM Dec = {target_gaia["pmdec"][0]:.2f} mas/yr')
+        print(f'   * Parallax = {target_gaia["parallax"][0]:.2f} mas')
+        print(f'   * RV = {target_gaia["radial_velocity"][0]:.2f} km/s')
 
-        print('[BACKTRACK INFO]: gathered target Gaia data')
         # resolve nearby stars
         width = u.Quantity(nearby_window, u.deg)
         height = u.Quantity(nearby_window, u.deg)
-        Gaia.ROW_LIMIT = -1
         nearby = Gaia.query_object_async(coordinate=coord, width=width, height=height, columns=columns)
         print(rf'[BACKTRACK INFO]: gathered {len(nearby)} Gaia objects from the {nearby_window} sq. deg. nearby {self.target_name}')
         print('[BACKTRACK INFO]: Finished nearby background gaia statistics')
@@ -228,7 +256,7 @@ class system():
                                           ra=ra/15., dec=dec, pm_ra=pmra, pm_dec=pmdec,
                                           parallax=par, rad_vel=0)
 
-        star2_icrs = novas.transform_cat(option=1, incat=star2_gaia, date_incat=2016.,
+        star2_icrs = novas.transform_cat(option=1, incat=star2_gaia, date_incat=self.gaia_epoch,
                                          date_newcat=2000., newcat_id="HIP")
 
         posx=[]
