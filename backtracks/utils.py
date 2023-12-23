@@ -155,4 +155,4 @@ class HostStarPriors(): # stripped version from pints (MultivariateGaussianLogPr
                         self._sigma12_sigma22_inv_l[i - 1],
                         (np.array(icdfs[j, 0:i]) - self._mu2[i - 1]))
                 icdfs[j, i] = norm.ppf(ps[j, i], mu, sigma) 
-        return icdfs
+        return np.squeeze(np.array_split(icdfs,n_params,axis=1))
