@@ -37,6 +37,7 @@ eDR3 Distance prior summary file from this [source](https://arxiv.org/pdf/2012.0
 Current example (HD131399Ab) uses data from Wagner+22 and Nielsen+17. Thank you to Kevin Wagner for providing the latest astrometry!
 
 Log-likelihood and some utility functions borrowed heavily from `orbitize!` (BSD 3-clause).
+PPF of multivariate normal borrowed from `pints' (BSD 3-clause).
 
 Installation
 ============
