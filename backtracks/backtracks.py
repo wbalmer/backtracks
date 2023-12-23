@@ -33,7 +33,7 @@ from novas.compat.eph_manager import ephem_open
 
 from schwimmbad import MPIPool
 
-from backtracks.utils import pol2car, transform_gengamm, transform_normal, transform_uniform, utc2tt
+from backtracks.utils import pol2car, transform_gengamm, transform_normal, transform_uniform, utc2tt, HostStarPriors
 from backtracks.plotting import diagnostic, neighborhood, plx_prior, posterior, trackplot
 
 
@@ -110,6 +110,7 @@ class System():
         self.decs = astrometry[2]
         self.decserr = astrometry[4]
         self.rho = astrometry[5]
+        
 
         if 'query_file' in kwargs and kwargs['query_file'] is not None:
             self.gaia_id = int(Path(kwargs['query_file']).stem.split('_')[-1])
@@ -141,10 +142,34 @@ class System():
         self.pmdeco = target_gaia['pmdec'][0] # mas/yr
         self.paro = target_gaia['parallax'][0] # mas
         self.radvelo = target_gaia['radial_velocity'][0] # km/s
-
+        
+        sig_ra=target_gaia['ra_error'][0]*u.mas.to(u.deg) # mas
+        sig_dec=target_gaia['dec_error'][0]*u.mas.to(u.deg)
+        sig_pmra=target_gaia['pmra_error'][0]
+        sig_pmdec=target_gaia['pmdec_error'][0]
+        ra_dec_corr=target_gaia['ra_dec_corr'][0]
+        ra_parallax_corr=target_gaia['ra_parallax_corr'][0]
+        ra_pmra_corr=target_gaia['ra_pmra_corr'][0]
+        ra_pmdec_corr=target_gaia['ra_pmdec_corr'][0]
+        dec_parallax_corr=target_gaia['dec_parallax_corr'][0]
+        dec_pmra_corr=target_gaia['dec_pmra_corr'][0]
+        dec_pmdec_corr=target_gaia['dec_pmdec_corr'][0]
+        parallax_pmra_corr=target_gaia['parallax_pmra_corr'][0]
+        parallax_pmdec_corr=target_gaia['parallax_pmdec_corr'][0]
+        pmra_pmdec_corr=target_gaia['pmra_pmdec_corr'][0]
+        sig_parallax=target_gaia['parallax_error'][0]
+        sig_rv=target_gaia['radial_velocity_error'][0]
+        
+        self.host_mean=np.r_[self.rao,self.deco,self.pmrao,self.pmdeco,self.paro,self.radvelo]
+        self.host_cov=np.array([[sig_ra**2,ra_dec_corr*sig_ra*sig_dec,ra_pmra_corr*sig_ra*sig_pmra,sig_ra*sig_pmdec*ra_pmdec_corr,sig_ra*sig_parallax*ra_parallax_corr,0],
+        [ra_dec_corr*sig_ra*sig_dec,sig_dec**2,sig_dec*sig_pmra*dec_pmra_corr,sig_dec*sig_pmdec*dec_pmdec_corr,sig_dec*sig_parallax*dec_parallax_corr,0],
+        [ra_pmra_corr*sig_ra*sig_pmra,dec_pmra_corr*sig_pmra*sig_dec,sig_pmra**2,sig_pmra*sig_pmdec*pmra_pmdec_corr,sig_pmra*sig_parallax*parallax_pmra_corr,0],[sig_pmdec*sig_ra*ra_pmdec_corr,sig_pmdec*sig_dec*dec_pmdec_corr,sig_pmdec*sig_pmra*pmra_pmdec_corr,sig_pmdec**2,sig_pmdec*sig_parallax*parallax_pmdec_corr,0],[sig_parallax*sig_ra*ra_parallax_corr,sig_parallax*sig_dec*dec_parallax_corr,sig_parallax*sig_pmra*parallax_pmra_corr,sig_parallax*sig_pmdec*parallax_pmdec_corr,sig_parallax**2,0],
+        [0,0,0,0,0,sig_rv**2]])
+        self.HostStarPriors=HostStarPriors(self.host_mean,self.host_cov)
         # initial estimate for background star scenario (best guesses)
         # (manually looked at approximate offset from star with cosine compensation for
         # dependence of RA on declination (RA is a singularity at the declination poles))
+        # this offset is calculated wrong (should use spherical offsets to) but it kinda works because the uniform prior is bigger than this. not all of these parameters are still in use
         self.ra0 = self.rao-(self.ras[0])/1000/3600/np.cos(self.deco/180.*np.pi)
         self.dec0 = self.deco-(self.decs[0])/1000/3600
         self.pmra0 = self.pmrao # mas/yr
@@ -164,7 +189,7 @@ class System():
         # Referred to the International Celestial Reference Frame.
         # Covers JED 2305424.50  (1599 DEC 09)  to  JED 2525008.50  (2201 FEB 20)
 
-        # define reference positions for host star (in this case fixed at the median Gaia parameters)
+        # define reference positions for host star (in this case fixed at the median Gaia parameters), this is superseded in 11-dimension model
         self.host_cat = novas.make_cat_entry(star_name="host",catalog="HIP",star_num=1,ra=self.rao/15.,
                                              dec=self.deco,pm_ra=self.pmrao,pm_dec=self.pmdeco,
                                              parallax=self.paro,rad_vel=self.radvelo)
@@ -198,7 +223,7 @@ class System():
                          unit=(u.hourangle, u.degree), frame='icrs')
         width = u.Quantity(50, u.arcsec)
         height = u.Quantity(50, u.arcsec)
-        columns = ['source_id', 'ra', 'dec', 'pmra', 'pmdec', 'parallax', 'radial_velocity', 'ref_epoch']
+        columns = ['source_id', 'ra', 'dec', 'pmra', 'pmdec', 'parallax', 'radial_velocity', 'ref_epoch','ra_error','dec_error','parallax_error','pmra_error','pmdec_error','radial_velocity_error','ra_dec_corr','ra_parallax_corr','ra_pmra_corr','ra_pmdec_corr','dec_parallax_corr','dec_pmra_corr','dec_pmdec_corr','parallax_pmra_corr','parallax_pmdec_corr','pmra_pmdec_corr']
         target_gaia = Gaia.query_object_async(coordinate=coord, width=width, height=height, columns=columns)
         target_gaia = target_gaia[target_gaia['source_id']==gaia_id]
         self.gaia_epoch = target_gaia['ref_epoch'][0]
@@ -245,30 +270,43 @@ class System():
         print(f'[BACKTRACK INFO]: Queried distance prior parameters, L={self.L:.2f}, alpha={self.alpha:.2f}, beta={self.beta:.2f}')
 
     def radecdists(self, days, param): # for multiple epochs
+        jd_start, jd_end, number = ephem_open() # can't we do this in the System class?
+        
         if len(param) == 4:
             ra, dec, pmra, pmdec = param
-        else:
+            par=0
+            host_icrs=self.host_icrs
+        elif len(param) == 5:
             ra, dec, pmra, pmdec, par = param
+            host_icrs=self.host_icrs
+        
+        else:
+            ra, dec, pmra, pmdec, par, ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host = param
+            
+            host_gaia= novas.make_cat_entry(star_name="HST", catalog="HIP", star_num=1,
+                                          ra=ra_host/15., dec=dec_host, pm_ra=pmra_host, pm_dec=pmdec_host,
+                                          parallax=par_host, rad_vel=rv_host)
 
-        jd_start, jd_end, number = ephem_open()
+            host_icrs = novas.transform_cat(option=1, incat=host_gaia, date_incat=self.gaia_epoch,
+                                         date_newcat=2000., newcat_id="HIP")
 
         star2_gaia = novas.make_cat_entry(star_name="BGR", catalog="HIP", star_num=2,
                                           ra=ra/15., dec=dec, pm_ra=pmra, pm_dec=pmdec,
                                           parallax=par, rad_vel=0)
-
+        
         star2_icrs = novas.transform_cat(option=1, incat=star2_gaia, date_incat=self.gaia_epoch,
                                          date_newcat=2000., newcat_id="HIP")
-
+            
         posx=[]
         posy=[]
         for i, day in enumerate(days):
-            raa,deca = novas.app_star(day,self.host_icrs)
+            raa,deca = novas.app_star(day,host_icrs)
             rab,decb = novas.app_star(day,star2_icrs)
-            c_a=SkyCoord(raa*15.,deca,unit=("deg","deg"))
-            c_b=SkyCoord(rab*15.,decb,unit=("deg","deg"))
+            c_a=SkyCoord(raa,deca,unit=("hourangle","deg"))
+            c_b=SkyCoord(rab,decb,unit=("hourangle","deg"))
             offset=c_a.spherical_offsets_to(c_b)
-            position_x=offset[0].arcsecond*1000
-            position_y=offset[1].arcsecond*1000
+            position_x=offset[0].mas
+            position_y=offset[1].mas
             posx.append(position_x)
             posy.append(position_y)
 
@@ -317,17 +355,24 @@ class System():
         """
         param = np.array(u) # copy u
 
-        if len(param) == 5:
-            ra, dec, pmra, pmdec, par = param # unpacking parameters
+
+        if len(param) == 11:
+            ra, dec, pmra, pmdec, par, ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host = param
+            
+            ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host = self.HostStarPriors.transform_normal_multivariate(np.c_[ra_host,dec_host,pmra_host,pmdec_host,par_host,rv_host])
+            # truncate distribution at 100 kpc (Nielsen+ 2017 do this at 10 kpc)
+            par = 1000/transform_gengamm(par, self.L, self.alpha, self.beta) # [units of mas]
+            if par < 1e-2:
+                par = -np.inf
+        elif len(param) == 5:
+            ra, dec, pmra, pmdec, par = param # unpacking unit cube samples
 
             # the PPF of Bailer-Jones 2015 eq. 17
-            # 1.35e3 length scale value from astraatmadja+ 2016
             par = 1000/transform_gengamm(par, self.L, self.alpha, self.beta) # [units of mas]
 
             # truncate distribution at 100 kpc (Nielsen+ 2017 do this at 10 kpc)
             if par < 1e-2:
                 par = -np.inf
-
         else:
             ra, dec, pmra, pmdec = param
 
@@ -338,8 +383,12 @@ class System():
         # normal priors for proper motion
         pmra = transform_normal(pmra, self.mu_pmra, self.sigma_pmra)
         pmdec = transform_normal(pmdec, self.mu_pmdec, self.sigma_pmdec)
-
-        if len(param) == 5:
+        
+        
+        
+        if len(param) == 11:
+            param = ra, dec, pmra, pmdec, par, ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host
+        elif len(param) == 5:
             param = ra, dec, pmra, pmdec, par
         else:
             param = ra, dec, pmra, pmdec
@@ -350,7 +399,7 @@ class System():
         """
         """
         print('[BACKTRACK INFO]: Beginning sampling, I hope')
-        ndim = 5
+        ndim = 11
 
         if not mpi_pool:
             with dynesty.pool.Pool(npool, self.loglike, self.prior_transform) as pool:
