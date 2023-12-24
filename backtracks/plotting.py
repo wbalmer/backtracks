@@ -74,7 +74,7 @@ def posterior(backtracks, fileprefix='./', filepost='.pdf'):
                                # label_kwargs={},
                                show_titles=True,
                                title_kwargs={'fontsize':14}
-                               # quantiles=None,
+                               quantiles=(0.1587,0.5,0.8413),
                                # fig=(fig, axes[:, 4:])
                               )
     fig.figsize = (9,9)
