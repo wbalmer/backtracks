@@ -510,7 +510,7 @@ class System():
 
         # Compute median, and 16th and 84th percentiles
         self.run_median = np.median(samples, axis=0)
-        self.run_quant = np.quantile(samples, [0.16, 0.84], axis=0)
+        self.run_quant = np.quantile(samples, [0.1587, 0.8413], axis=0)
 
         return self.results
 
