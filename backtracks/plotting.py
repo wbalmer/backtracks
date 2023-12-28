@@ -65,6 +65,7 @@ def posterior(backtracks, fileprefix='./', filepost='.pdf'):
     # plot extended run (right)
     fig, ax = dyplot.cornerplot(backtracks.results,
                                color='cornflowerblue',
+                               dims=range(5),
                                # truths=np.zeros(ndim),
                                # span=[(-4.5, 4.5) for i in range(ndim)],
                                labels=labels,
@@ -72,8 +73,9 @@ def posterior(backtracks, fileprefix='./', filepost='.pdf'):
                                max_n_ticks=4,
                                # label_kwargs={},
                                show_titles=True,
-                               title_kwargs={'fontsize':14}
-                               # quantiles=None,
+                               title_kwargs={'fontsize':14},
+                               quantiles=(0.1587,0.5,0.8413),
+                               title_quantiles=(0.1587,0.5,0.8413)
                                # fig=(fig, axes[:, 4:])
                               )
     fig.figsize = (9,9)
@@ -134,7 +136,7 @@ def trackplot(
 
     if plot_stationary:
         stat_pars = backtracks.run_median.copy()
-        stat_pars[2:] = 0.0
+        stat_pars[2:5] = 0.0
 
         ra_stat, dec_stat = backtracks.radecdists(plot_epochs_tt, stat_pars)
         axs['A'].plot(ra_stat, dec_stat, color="lightgray", label="stationary background", ls='--')
@@ -317,7 +319,7 @@ def neighborhood(backtracks, fileprefix='./', filepost='.pdf'):
     nearby_table['pmdec'] = backtracks.nearby['pmdec'].data
     nearby_table['parallax'] = backtracks.nearby['parallax'].data
 
-    truths = backtracks.run_median[2:]
+    truths = backtracks.run_median[2:5]
 
     # 1,2,3 sigma levels for a 2d gaussian
     levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2)
@@ -362,7 +364,7 @@ def stationtrackplot(backtracks, ref_epoch, daysback=2600, daysforward=1200, fil
     corr_terms=~np.isnan(backtracks.rho) # corr_terms is everywhere where rho is not a nan.
 
     # plot stationary bg track at infinity (0 parallax)
-    rasbg,decbg = backtracks.radecdists(plot_epochs_tt, best_pars[0],best_pars[1],0,0,0) # retrieve coordinates at full range of epochs
+    rasbg,decbg = backtracks.radecdists(plot_epochs_tt, best_pars[0],best_pars[1],0,0,0,best_pars[5],best_pars[6],best_pars[7],best_pars[8],best_pars[9],best_pars[10]) # retrieve coordinates at full range of epochs
     # rasbg,decbg = backtracks.radecdists(plot_epochs_tt, backtracks.ra0, backtracks.dec0, 0,0,0) # retrieve coordinates at full range of epochs
 
     axs['B'].plot(plot_times.decimalyear,radec2seppa(rasbg,decbg)[0],color='gray',alpha=1, zorder=3,ls='--')
