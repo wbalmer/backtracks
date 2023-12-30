@@ -47,15 +47,19 @@ class System():
     Class for describing a star system with a companion candidate.
     """
 
-    def __init__(self, target_name: str, candidate_file: str, nearby_window: float = 0.5, fileprefix='./', **kwargs):
+    def __init__(self, target_name: str, candidate_file: str, nearby_window: float = 0.5, fileprefix = './', ndim = 11, **kwargs):
         self.target_name = target_name
         self.candidate_file = candidate_file
         self.fileprefix = fileprefix
+        self.ndim = ndim
 
         if 'unif' in kwargs:
             self.unif = kwargs['unif']
         else:
             self.unif = 5e-3
+        if 'rv_host_method' in kwargs:
+             if 'rv_host_params' not in kwargs:
+                 raise Exception("'rv_host_method' is set. Please provide (mu,sigma) or (lower,upper) in km/s in 'rv_host_params'")
 
         if 'jd_tt' in kwargs:
             warnings.warn("The jd_tt parameter has been removed. "
@@ -138,7 +142,6 @@ class System():
         self.pmrao = target_gaia['pmra'][0] # mas/yr
         self.pmdeco = target_gaia['pmdec'][0] # mas/yr
         self.paro = target_gaia['parallax'][0] # mas
-        self.radvelo = target_gaia['radial_velocity'][0] # km/s
         
         sig_ra = target_gaia['ra_error'][0]*u.mas.to(u.deg) # mas
         sig_dec = target_gaia['dec_error'][0]*u.mas.to(u.deg)
@@ -155,8 +158,23 @@ class System():
         parallax_pmdec_corr = target_gaia['parallax_pmdec_corr'][0]
         pmra_pmdec_corr = target_gaia['pmra_pmdec_corr'][0]
         sig_parallax = target_gaia['parallax_error'][0]
-        self.sig_rv = target_gaia['radial_velocity_error'][0]
-        
+        if 'rv_host_method' in kwargs:
+            if kwargs['rv_host_method'].lower() == 'uniform':
+                self.rv_host_method='uniform'
+                self.rv_lower,self.rv_upper=kwargs['rv_host_params'] # e.g., rv_host_params=(-10,10)
+            elif kwargs['rv_host_method'].lower() == 'normal': 
+                self.rv_host_method='normal'
+                self.radvelo,self.sig_rv=kwargs['rv_host_params'] # e.g., rv_host_params=(10,0.5)
+        else: # if not set, it is the default gaia
+            try:
+                self.rv_host_method='gaia'
+                self.radvelo = target_gaia['radial_velocity'][0] # km/s
+                self.sig_rv = target_gaia['radial_velocity_error'][0]
+                if isinstance(self.radvelo, (int, float)) and not isinstance(self.radvelo, bool) == False:
+                    raise Exception("No valid Gaia RV, please change rv_host_method to 'normal' or 'uniform' and set rv_host_params to override")
+            except:
+                raise Exception("No valid Gaia RV, please change rv_host_method to 'normal' or 'uniform' and set rv_host_params to override.")
+
         self.host_mean = np.r_[self.rao,self.deco,self.pmrao,self.pmdeco,self.paro]
         self.host_cov = np.array([[sig_ra**2,ra_dec_corr*sig_ra*sig_dec,ra_pmra_corr*sig_ra*sig_pmra,sig_ra*sig_pmdec*ra_pmdec_corr,sig_ra*sig_parallax*ra_parallax_corr],
         [ra_dec_corr*sig_ra*sig_dec,sig_dec**2,sig_dec*sig_pmra*dec_pmra_corr,sig_dec*sig_pmdec*dec_pmdec_corr,sig_dec*sig_parallax*dec_parallax_corr],
@@ -186,13 +204,14 @@ class System():
         # Covers JED 2305424.50  (1599 DEC 09)  to  JED 2525008.50  (2201 FEB 20)
 
         # define reference positions for host star (in this case fixed at the median Gaia parameters), this is superseded in 11-dimension model
-        self.host_cat = novas.make_cat_entry(star_name="host",catalog="HIP",star_num=1,ra=self.rao/15.,
+        if self.ndim <= 5: #
+            self.host_cat = novas.make_cat_entry(star_name="host",catalog="HIP",star_num=1,ra=self.rao/15.,
                                              dec=self.deco,pm_ra=self.pmrao,pm_dec=self.pmdeco,
                                              parallax=self.paro,rad_vel=self.radvelo)
-        print('[BACKTRACK INFO]: made cat entry for host')
-        self.host_icrs = novas.transform_cat(option=1, incat=self.host_cat, date_incat=self.gaia_epoch,
+            print('[BACKTRACK INFO]: made cat entry for host')
+            self.host_icrs = novas.transform_cat(option=1, incat=self.host_cat, date_incat=self.gaia_epoch,
                                              date_newcat=2000., newcat_id="HIP")
-        print('[BACKTRACK INFO]: transformed cat entry for host')
+            print('[BACKTRACK INFO]: transformed cat entry for host')
 
         # this converts the Epoch from the Gaia ref_epoch (2016 for DR3) to 2000 following ICRS
 
@@ -356,7 +375,10 @@ class System():
             ra, dec, pmra, pmdec, par, ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host = param
             
             ra_host, dec_host, pmra_host, pmdec_host, par_host = self.HostStarPriors.transform_normal_multivariate(np.c_[ra_host,dec_host,pmra_host,pmdec_host,par_host])
-            rv_host = transform_normal(rv_host, self.radvelo, self.sig_rv)
+            if self.rv_host_method == 'uniform':
+                rv_host = transform_uniform(rv_host, self.rv_lower, self.rv_upper)
+            else: # rv_host_method == 'normal' or 'gaia' 
+                rv_host = transform_normal(rv_host, self.radvelo, self.sig_rv)
             # truncate distribution at 100 kpc (Nielsen+ 2017 do this at 10 kpc)
             par = 1000/transform_gengamm(par, self.L, self.alpha, self.beta) # [units of mas]
             if par < 1e-2:
@@ -380,9 +402,7 @@ class System():
         # normal priors for proper motion
         pmra = transform_normal(pmra, self.mu_pmra, self.sigma_pmra)
         pmdec = transform_normal(pmdec, self.mu_pmdec, self.sigma_pmdec)
-        
-        
-        
+
         if len(param) == 11:
             param = ra, dec, pmra, pmdec, par, ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host
         elif len(param) == 5:
@@ -395,8 +415,8 @@ class System():
     def fit(self, dlogz=0.5, npool=4, dynamic=False, nlive=200, mpi_pool=False, resume=False, sample_method='unif'):
         """
         """
-        print('[BACKTRACK INFO]: Beginning sampling, I hope')
-        ndim = 11
+        print('[BACKTRACK INFO]: Beginning sampling')
+        ndim = self.ndim
 
         if not mpi_pool:
             with dynesty.pool.Pool(npool, self.loglike, self.prior_transform) as pool:
