@@ -42,9 +42,6 @@ Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"
 # Retrieve all rows from a Gaia query
 Gaia.ROW_LIMIT = -1
 
-# TODO: is there a way to account for gaia correlations?
-
-
 class System():
     """
     Class for describing a star system with a companion candidate.
@@ -143,29 +140,28 @@ class System():
         self.paro = target_gaia['parallax'][0] # mas
         self.radvelo = target_gaia['radial_velocity'][0] # km/s
         
-        sig_ra=target_gaia['ra_error'][0]*u.mas.to(u.deg) # mas
-        sig_dec=target_gaia['dec_error'][0]*u.mas.to(u.deg)
-        sig_pmra=target_gaia['pmra_error'][0]
-        sig_pmdec=target_gaia['pmdec_error'][0]
-        ra_dec_corr=target_gaia['ra_dec_corr'][0]
-        ra_parallax_corr=target_gaia['ra_parallax_corr'][0]
-        ra_pmra_corr=target_gaia['ra_pmra_corr'][0]
-        ra_pmdec_corr=target_gaia['ra_pmdec_corr'][0]
-        dec_parallax_corr=target_gaia['dec_parallax_corr'][0]
-        dec_pmra_corr=target_gaia['dec_pmra_corr'][0]
-        dec_pmdec_corr=target_gaia['dec_pmdec_corr'][0]
-        parallax_pmra_corr=target_gaia['parallax_pmra_corr'][0]
-        parallax_pmdec_corr=target_gaia['parallax_pmdec_corr'][0]
-        pmra_pmdec_corr=target_gaia['pmra_pmdec_corr'][0]
-        sig_parallax=target_gaia['parallax_error'][0]
-        sig_rv=target_gaia['radial_velocity_error'][0]
+        sig_ra = target_gaia['ra_error'][0]*u.mas.to(u.deg) # mas
+        sig_dec = target_gaia['dec_error'][0]*u.mas.to(u.deg)
+        sig_pmra = target_gaia['pmra_error'][0]
+        sig_pmdec = target_gaia['pmdec_error'][0]
+        ra_dec_corr = target_gaia['ra_dec_corr'][0]
+        ra_parallax_corr = target_gaia['ra_parallax_corr'][0]
+        ra_pmra_corr = target_gaia['ra_pmra_corr'][0]
+        ra_pmdec_corr = target_gaia['ra_pmdec_corr'][0]
+        dec_parallax_corr = target_gaia['dec_parallax_corr'][0]
+        dec_pmra_corr = target_gaia['dec_pmra_corr'][0]
+        dec_pmdec_corr = target_gaia['dec_pmdec_corr'][0]
+        parallax_pmra_corr = target_gaia['parallax_pmra_corr'][0]
+        parallax_pmdec_corr = target_gaia['parallax_pmdec_corr'][0]
+        pmra_pmdec_corr = target_gaia['pmra_pmdec_corr'][0]
+        sig_parallax = target_gaia['parallax_error'][0]
+        self.sig_rv = target_gaia['radial_velocity_error'][0]
         
-        self.host_mean=np.r_[self.rao,self.deco,self.pmrao,self.pmdeco,self.paro,self.radvelo]
-        self.host_cov=np.array([[sig_ra**2,ra_dec_corr*sig_ra*sig_dec,ra_pmra_corr*sig_ra*sig_pmra,sig_ra*sig_pmdec*ra_pmdec_corr,sig_ra*sig_parallax*ra_parallax_corr,0],
-        [ra_dec_corr*sig_ra*sig_dec,sig_dec**2,sig_dec*sig_pmra*dec_pmra_corr,sig_dec*sig_pmdec*dec_pmdec_corr,sig_dec*sig_parallax*dec_parallax_corr,0],
-        [ra_pmra_corr*sig_ra*sig_pmra,dec_pmra_corr*sig_pmra*sig_dec,sig_pmra**2,sig_pmra*sig_pmdec*pmra_pmdec_corr,sig_pmra*sig_parallax*parallax_pmra_corr,0],[sig_pmdec*sig_ra*ra_pmdec_corr,sig_pmdec*sig_dec*dec_pmdec_corr,sig_pmdec*sig_pmra*pmra_pmdec_corr,sig_pmdec**2,sig_pmdec*sig_parallax*parallax_pmdec_corr,0],[sig_parallax*sig_ra*ra_parallax_corr,sig_parallax*sig_dec*dec_parallax_corr,sig_parallax*sig_pmra*parallax_pmra_corr,sig_parallax*sig_pmdec*parallax_pmdec_corr,sig_parallax**2,0],
-        [0,0,0,0,0,sig_rv**2]])
-        self.HostStarPriors=HostStarPriors(self.host_mean,self.host_cov)
+        self.host_mean = np.r_[self.rao,self.deco,self.pmrao,self.pmdeco,self.paro]
+        self.host_cov = np.array([[sig_ra**2,ra_dec_corr*sig_ra*sig_dec,ra_pmra_corr*sig_ra*sig_pmra,sig_ra*sig_pmdec*ra_pmdec_corr,sig_ra*sig_parallax*ra_parallax_corr],
+        [ra_dec_corr*sig_ra*sig_dec,sig_dec**2,sig_dec*sig_pmra*dec_pmra_corr,sig_dec*sig_pmdec*dec_pmdec_corr,sig_dec*sig_parallax*dec_parallax_corr],
+        [ra_pmra_corr*sig_ra*sig_pmra,dec_pmra_corr*sig_pmra*sig_dec,sig_pmra**2,sig_pmra*sig_pmdec*pmra_pmdec_corr,sig_pmra*sig_parallax*parallax_pmra_corr],[sig_pmdec*sig_ra*ra_pmdec_corr,sig_pmdec*sig_dec*dec_pmdec_corr,sig_pmdec*sig_pmra*pmra_pmdec_corr,sig_pmdec**2,sig_pmdec*sig_parallax*parallax_pmdec_corr],[sig_parallax*sig_ra*ra_parallax_corr,sig_parallax*sig_dec*dec_parallax_corr,sig_parallax*sig_pmra*parallax_pmra_corr,sig_parallax*sig_pmdec*parallax_pmdec_corr,sig_parallax**2]])
+        self.HostStarPriors = HostStarPriors(self.host_mean,self.host_cov)
         # initial estimate for background star scenario (best guesses)
         # (manually looked at approximate offset from star with cosine compensation for
         # dependence of RA on declination (RA is a singularity at the declination poles))
@@ -359,7 +355,8 @@ class System():
         if len(param) == 11:
             ra, dec, pmra, pmdec, par, ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host = param
             
-            ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host = self.HostStarPriors.transform_normal_multivariate(np.c_[ra_host,dec_host,pmra_host,pmdec_host,par_host,rv_host])
+            ra_host, dec_host, pmra_host, pmdec_host, par_host = self.HostStarPriors.transform_normal_multivariate(np.c_[ra_host,dec_host,pmra_host,pmdec_host,par_host])
+            rv_host = transform_normal(rv_host, self.radvelo, self.sig_rv)
             # truncate distribution at 100 kpc (Nielsen+ 2017 do this at 10 kpc)
             par = 1000/transform_gengamm(par, self.L, self.alpha, self.beta) # [units of mas]
             if par < 1e-2:
