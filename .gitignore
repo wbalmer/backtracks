@@ -14,10 +14,12 @@ bgstar_emcee.py
 .vscode*
 *beta_pic*
 *SAO*
+*sao*
+*yses2*
+*YSES2*
 .pyproject.toml.sw
 .pytest_cache/
+tests/test_changes.py
 tests/HD_131399A_*
 tests/dynesty.save
-tests/yses2*
-tests/YSES_2*
 tests/gaia_query_*

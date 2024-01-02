@@ -22,7 +22,7 @@ import novas.compat as novas
 import numpy as np
 import pandas as pd
 
-from astropy.coordinates import SkyCoord
+from astropy.coordinates import SkyCoord, Distance
 from astropy.table import Table
 from astropy.io import fits
 from astropy.time import Time
@@ -34,7 +34,7 @@ from novas.compat.eph_manager import ephem_open
 from schwimmbad import MPIPool
 
 from backtracks.utils import pol2car, transform_gengamm, transform_normal, transform_uniform, utc2tt, HostStarPriors
-from backtracks.plotting import diagnostic, neighborhood, plx_prior, posterior, trackplot
+from backtracks.plotting import diagnostic, neighborhood, plx_prior, posterior, trackplot, stationtrackplot
 
 
 # Set the Gaia data release to DR3
@@ -162,6 +162,7 @@ class System():
             if kwargs['rv_host_method'].lower() == 'uniform':
                 self.rv_host_method='uniform'
                 self.rv_lower,self.rv_upper=kwargs['rv_host_params'] # e.g., rv_host_params=(-10,10)
+                self.radvelo = np.mean([self.rv_lower,self.rv_upper])
             elif kwargs['rv_host_method'].lower() == 'normal': 
                 self.rv_host_method='normal'
                 self.radvelo,self.sig_rv=kwargs['rv_host_params'] # e.g., rv_host_params=(10,0.5)
@@ -180,16 +181,39 @@ class System():
         [ra_dec_corr*sig_ra*sig_dec,sig_dec**2,sig_dec*sig_pmra*dec_pmra_corr,sig_dec*sig_pmdec*dec_pmdec_corr,sig_dec*sig_parallax*dec_parallax_corr],
         [ra_pmra_corr*sig_ra*sig_pmra,dec_pmra_corr*sig_pmra*sig_dec,sig_pmra**2,sig_pmra*sig_pmdec*pmra_pmdec_corr,sig_pmra*sig_parallax*parallax_pmra_corr],[sig_pmdec*sig_ra*ra_pmdec_corr,sig_pmdec*sig_dec*dec_pmdec_corr,sig_pmdec*sig_pmra*pmra_pmdec_corr,sig_pmdec**2,sig_pmdec*sig_parallax*parallax_pmdec_corr],[sig_parallax*sig_ra*ra_parallax_corr,sig_parallax*sig_dec*dec_parallax_corr,sig_parallax*sig_pmra*parallax_pmra_corr,sig_parallax*sig_pmdec*parallax_pmdec_corr,sig_parallax**2]])
         self.HostStarPriors = HostStarPriors(self.host_mean,self.host_cov)
+        
         # initial estimate for background star scenario (best guesses)
-        # (manually looked at approximate offset from star with cosine compensation for
-        # dependence of RA on declination (RA is a singularity at the declination poles))
-        # this offset is calculated wrong (should use spherical offsets to) but it kinda works because the uniform prior is bigger than this. not all of these parameters are still in use
-        self.ra0 = self.rao-(self.ras[0])/1000/3600/np.cos(self.deco/180.*np.pi)
-        self.dec0 = self.deco-(self.decs[0])/1000/3600
+        init_host_coord = SkyCoord(ra=self.rao*u.deg, dec=self.deco*u.deg, distance=Distance(parallax=self.paro*u.mas), pm_ra_cosdec=self.pmrao*u.mas/u.yr, pm_dec=self.pmdeco*u.mas/u.yr, obstime=Time(self.gaia_epoch,format='jyear',scale='tcb'))
+        # choose time of reference observation of relative candidate position (defaults to the first observation)
+        if 'ref_epoch_idx' in kwargs:
+            self.ref_epoch_idx = kwargs['ref_epoch_idx']
+            self.ref_epoch = self.epochs[self.ref_epoch_idx]
+        else:
+            self.ref_epoch_idx = 0
+            self.ref_epoch = self.epochs[self.ref_epoch_idx]
+        # propagate host position from Gaia epoch (2016.0 for DR3) to reference observation epoch 
+        init_host_coord_at_obs = init_host_coord.apply_space_motion(Time(self.ref_epoch, format='jd'))
+        # apply measurement of relative astrometry to get candidate in absolute coordinates at time of observation
+        init_cand_coord_at_obs = init_host_coord_at_obs.spherical_offsets_by(self.ras[self.ref_epoch_idx] * u.mas, self.decs[self.ref_epoch_idx] * u.mas)
+        init_cand_coord = SkyCoord(ra=init_cand_coord_at_obs.ra, dec=init_cand_coord_at_obs.dec, distance=Distance(parallax=self.paro*u.mas), pm_ra_cosdec=self.pmrao*u.mas/u.yr, pm_dec=self.pmdeco*u.mas/u.yr, obstime=Time(self.ref_epoch, format='jd'))
+        # propagate candidate position from epoch of observation to Gaia epoch
+        tdiff = Time(self.ref_epoch, format='jd').decimalyear-self.gaia_epoch
+        init_cand_coord_at_gaia = init_cand_coord.apply_space_motion(Time(tdiff+self.gaia_epoch,format='jyear',scale='tcb'))
+        
+        # not sure which of these is used anymore
+        self.ra0 = init_cand_coord_at_gaia.ra.value
+        self.dec0 = init_cand_coord_at_gaia.dec.value
         self.pmra0 = self.pmrao # mas/yr
         self.pmdec0 = self.pmdeco # mas/yr
         self.par0 = self.paro/10 # mas
         self.radvel0 = 0 # km/s
+
+        # create parameter set for stationary case
+        # params = ra, dec, pmra, pmdec, par, ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host
+        self.stationary_params = [self.ra0, self.dec0, 0, 0, 0, self.rao, self.deco, self.pmrao, self.pmdeco, self.paro, self.radvelo]
+        # Compute useful chi2 value
+        self.stationary_loglike = self.loglike(self.stationary_params)
+        self.stationary_chi2_red = np.log(-2.*self.stationary_loglike)/(len(self.epochs)-self.ndim)
 
         jd_start, jd_end, number = ephem_open()
         print('[BACKTRACK INFO]: Opened ephemeris file')
@@ -529,28 +553,38 @@ class System():
         self.run_median = np.median(samples, axis=0)
         self.run_quant = np.quantile(samples, [0.1587, 0.8413], axis=0)
 
+        # Compute useful chi2 value
+        self.median_loglike = self.loglike(self.run_median)
+        self.median_chi2_red = np.log(-2.*self.median_loglike)/(len(self.epochs)-self.ndim)
+
         return self.results
 
     def save_results(self, fileprefix='./'):
         save_dict = {'med': self.run_median, 'quant': self.run_quant, 'results': self.results}
         target_label = self.target_name.replace(' ','_')
         file_name = f'{fileprefix}{target_label}_dynestyrun_results.pkl'
+        print('[BACKTRACK INFO]: Saving results to {}'.format(file_name))
         pickle.dump(save_dict, open(file_name, "wb"))
 
     def load_results(self, fileprefix: str = './'):
         target_label = self.target_name.replace(' ', '_')
         file_name = f'{fileprefix}{target_label}_dynestyrun_results.pkl'
+        print('[BACKTRACK INFO]: Loading results from {}'.format(file_name))
         save_dict = pickle.load(open(file_name, "rb"))
         self.run_median = save_dict['med']
         self.run_quant = save_dict['quant']
         self.results = save_dict['results']
+
+        # recompute useful chi2 value
+        self.median_loglike = self.loglike(self.run_median)
+        self.median_chi2_red = np.log(-2.*self.median_loglike)/(len(self.epochs)-self.ndim)
 
     def generate_plots(
             self,
             days_backward: float = 3.*365.,
             days_forward: float = 3.*365.,
             step_size: float = 10.,
-            ref_epoch: Optional[Tuple[int, int, int]] = None,
+            # ref_epoch: Optional[Tuple[int, int, int]] = None,
             plot_radec: bool = False,
             plot_stationary: bool = False,
             fileprefix: str = './',
@@ -558,12 +592,8 @@ class System():
         ) -> Tuple[Figure, Figure, Figure, Figure, Figure]:
         """
         """
-        if ref_epoch is None:
-            mean_epoch = np.floor(np.mean(self.epochs))
-            ref_epoch = Time(mean_epoch, format='jd')
-
-        else:
-            ref_epoch = Time(f'{ref_epoch[0]}-{ref_epoch[1]}-{ref_epoch[2]}T12:00:00', format='isot')
+        print('[BACKTRACK INFO]: Generating Plots')
+        ref_epoch = Time(self.ref_epoch, format='jd')
 
         fig_track = trackplot(
             self,
@@ -581,5 +611,33 @@ class System():
         fig_diag = diagnostic(self, fileprefix=fileprefix, filepost=filepost)
         fig_prior = plx_prior(self, fileprefix=fileprefix, filepost=filepost)
         fig_hood = neighborhood(self, fileprefix=fileprefix, filepost=filepost)
-
+        print('[BACKTRACK INFO]: Plots saved to {}'.format(fileprefix))
         return fig_track, fig_post, fig_diag, fig_prior, fig_hood
+    
+    def generate_stationary_plot(
+            self,
+            days_backward: float = 3.*365.,
+            days_forward: float = 3.*365.,
+            step_size: float = 10.,
+            # ref_epoch: Optional[Tuple[int, int, int]] = None,
+            plot_radec: bool = False,
+            fileprefix: str = './',
+            filepost: str = '.pdf',
+        ) -> Figure:
+        """
+        """
+        print('[BACKTRACK INFO]: Generating Stationary plot')
+        ref_epoch = Time(self.ref_epoch, format='jd')
+
+        fig_track = stationtrackplot(
+            self,
+            ref_epoch=ref_epoch.jd,
+            days_backward=days_backward,
+            days_forward=days_forward,
+            step_size=step_size,
+            plot_radec=plot_radec,
+            fileprefix=fileprefix,
+            filepost=filepost
+        )
+        print('[BACKTRACK INFO]: Stationary plot saved to {}'.format(fileprefix))
+        return fig_track

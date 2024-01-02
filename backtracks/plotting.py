@@ -135,11 +135,11 @@ def trackplot(
     # Plot stationary background track at infinity
 
     if plot_stationary:
-        stat_pars = backtracks.run_median.copy()
-        stat_pars[2:5] = 0.0
+        stat_pars = backtracks.stationary_params
 
         ra_stat, dec_stat = backtracks.radecdists(plot_epochs_tt, stat_pars)
-        axs['A'].plot(ra_stat, dec_stat, color="lightgray", label="stationary background", ls='--')
+        axs['A'].plot(ra_stat, dec_stat, color="lightgray", ls='--',
+                      label="Stationary track, $\chi^2_r={}$".format(round(backtracks.stationary_chi2_red,2)))
 
         if plot_radec:
             axs['B'].plot(plot_times.decimalyear, ra_stat, color="lightgray", ls='--')
@@ -193,7 +193,7 @@ def trackplot(
 
     ra_bg, dec_bg = backtracks.radecdists(plot_epochs_tt, backtracks.run_median)
 
-    axs['A'].plot(ra_bg, dec_bg, color="black", label="best model")
+    axs['A'].plot(ra_bg, dec_bg, color="black", label="Median track, $\chi^2_r={}$".format(round(backtracks.median_chi2_red,2)))
 
     if plot_radec:
         axs['B'].plot(plot_times.decimalyear, ra_bg, color='black')
@@ -223,7 +223,7 @@ def trackplot(
     axs['A'].errorbar(backtracks.ras, backtracks.decs,
                       yerr=backtracks.decserr, xerr=backtracks.raserr,
                       color="tab:gray", ecolor='tomato', mec='tomato',
-                      label="data", linestyle="none", marker="o", ms=5., mew=1.5)
+                      label="Data", linestyle="none", marker="o", ms=5., mew=1.5)
 
     # Plot deltaRA/deltaDec or sep/PA as function of date
 
@@ -341,73 +341,154 @@ def neighborhood(backtracks, fileprefix='./', filepost='.pdf'):
     return fig
 
 
-def stationtrackplot(backtracks, ref_epoch, daysback=2600, daysforward=1200, fileprefix='./', filepost='.pdf'):
+def stationtrackplot(
+        backtracks,
+        ref_epoch,
+        days_backward=3.*365.,
+        days_forward=3.*365.,
+        step_size=10.,
+        plot_radec=False,
+        fileprefix='./',
+        filepost='.pdf'
+    ):
     """
     """
-    fig,axs = plt.subplot_mosaic(
+    fig, axs = plt.subplot_mosaic(
         '''
         AABB
         AACC
         ''',
-        figsize=(16,8))
+        figsize=(16, 8))
 
-    plot_epochs=np.arange(daysforward)+ref_epoch-daysback # 4000 days of epochs to evaluate position at
+    # Epochs for the background tracks
+
+    plot_epochs = ref_epoch + np.arange(-days_backward, days_forward, step_size)
     plot_epochs_tt=utc2tt(plot_epochs)
+    # Create astropy times for observations and background model
 
     plot_times = Time(plot_epochs, format='jd')
     obs_times = Time(backtracks.epochs, format='jd')
 
-    post_samples = backtracks.results.samples
-    best_pars = np.array(backtracks.run_median).T[0]
-    quant_pars = np.array(backtracks.run_quant).T
+    # The corr_terms are True where rho is not a nan
 
-    corr_terms=~np.isnan(backtracks.rho) # corr_terms is everywhere where rho is not a nan.
+    corr_terms =~ np.isnan(backtracks.rho)
 
-    # plot stationary bg track at infinity (0 parallax)
-    rasbg,decbg = backtracks.radecdists(plot_epochs_tt, best_pars[0],best_pars[1],0,0,0,best_pars[5],best_pars[6],best_pars[7],best_pars[8],best_pars[9],best_pars[10]) # retrieve coordinates at full range of epochs
-    # rasbg,decbg = backtracks.radecdists(plot_epochs_tt, backtracks.ra0, backtracks.dec0, 0,0,0) # retrieve coordinates at full range of epochs
+    # Plot stationary background track at infinity
 
-    axs['B'].plot(plot_times.decimalyear,radec2seppa(rasbg,decbg)[0],color='gray',alpha=1, zorder=3,ls='--')
-    axs['C'].plot(plot_times.decimalyear,radec2seppa(rasbg,decbg)[1],color='gray',alpha=1, zorder=3,ls='--')
+    stat_pars = backtracks.stationary_params
 
-    axs['A'].plot(rasbg,decbg,color="gray",zorder=3,label="stationary bg",alpha=1,ls='--')
+    ra_stat, dec_stat = backtracks.radecdists(plot_epochs_tt, stat_pars)
+    axs['A'].plot(ra_stat, dec_stat, color="lightgray", ls='--',
+                    label="Stationary track, $\chi^2_r={}$".format(round(backtracks.stationary_chi2_red,2)))
 
-    # plot data in deltaRA, deltaDEC plot
-    axs['A'].errorbar(backtracks.ras[~corr_terms],backtracks.decs[~corr_terms],yerr=backtracks.decserr[~corr_terms],xerr=backtracks.raserr[~corr_terms],
-                      color="tomato",label="data",linestyle="", zorder=5)
-    axs['A'].errorbar(backtracks.ras[corr_terms],backtracks.decs[corr_terms],yerr=backtracks.decserr[corr_terms],xerr=backtracks.raserr[corr_terms],
-                      color="tomato",linestyle="",marker=".", zorder=5)
-    # labels
-    # plt.suptitle("fitted model of background star for YSES-2")
+    if plot_radec:
+        axs['B'].plot(plot_times.decimalyear, ra_stat, color="lightgray", ls='--')
+        axs['C'].plot(plot_times.decimalyear, dec_stat, color="lightgray", ls='--')
+    else:
+        sep_stat, pa_stat = radec2seppa(ra_stat, dec_stat)
+        axs['B'].plot(plot_times.decimalyear, sep_stat, color='lightgray', ls='--')
+        axs['C'].plot(plot_times.decimalyear, pa_stat, color='lightgray', ls='--')
+
+    # Connect data points with best-fit model epochs
+
+    ra_bg_best, dec_bg_best = backtracks.radecdists(backtracks.epochs_tt, stat_pars)
+
+    for i in range(len(backtracks.ras)):
+        comp_ra = (backtracks.ras[i], ra_bg_best[i])
+        comp_dec = (backtracks.decs[i], dec_bg_best[i])
+        axs['A'].plot(comp_ra, comp_dec, ls='-', color='tab:gray', lw=1.0)
+
+    # Plot coordinates at observation epochs for best-fit parameters
+
+    axs['A'].plot(ra_bg_best, dec_bg_best, color="tomato", mec='tab:gray',
+                  ms=5., mew=1.5, linestyle="none", marker="o")
+
+    # Plot data points (deltaRA, deltaDEC)
+
+    axs['A'].errorbar(backtracks.ras, backtracks.decs,
+                      yerr=backtracks.decserr, xerr=backtracks.raserr,
+                      color="tab:gray", ecolor='tomato', mec='tomato',
+                      label="Data", linestyle="none", marker="o", ms=5., mew=1.5)
+
+    # Plot deltaRA/deltaDec or sep/PA as function of date
+
+    if plot_radec:
+        # Plot the deltaRA and deltaDec data points
+
+        axs['B'].errorbar(obs_times.decimalyear, backtracks.ras,
+                          yerr=backtracks.raserr, color="tab:gray",
+                          ecolor='tomato', linestyle="none",
+                          marker='o', ms=5., mew=1.5, mec='tomato')
+
+        axs['C'].errorbar(obs_times.decimalyear, backtracks.decs,
+                          yerr=backtracks.decserr, color="tab:gray",
+                          ecolor='tomato', linestyle="none",
+                          marker='o', ms=5., mew=1.5, mec='tomato')
+
+    else:
+        # Plot the sep and PA data points
+        # The error calculation is adopted from orbitize!
+
+        if np.sum(~corr_terms) > 0:
+            # Plot the sep and PA data points that are not corr_terms
+
+            obs_sep, obs_pa = radec2seppa(backtracks.ras[~corr_terms], backtracks.decs[~corr_terms])
+            obs_sep_err = 0.5*backtracks.raserr[~corr_terms] + 0.5*backtracks.decserr[~corr_terms]
+            obs_pa_err = np.degrees(obs_sep_err/obs_sep)
+
+            axs['B'].errorbar(obs_times[~corr_terms].decimalyear, obs_sep,
+                              yerr=obs_sep_err, color="tab:gray",
+                              ecolor='tomato', linestyle="none",
+                              marker='o', ms=5., mew=1.5, mec='tomato')
+
+            axs['C'].errorbar(obs_times[~corr_terms].decimalyear, obs_pa,
+                              yerr=obs_pa_err, color="tab:gray",
+                              ecolor='tomato', linestyle="none",
+                              marker='o', ms=5., mew=1.5, mec='tomato')
+
+        if np.sum(corr_terms) > 0:
+            # Plot the sep and PA data points that are corr_terms
+
+            obs_sep, obs_pa = radec2seppa(backtracks.ras[corr_terms], backtracks.decs[corr_terms])
+
+            obs_sep_err = np.zeros(obs_sep.size)
+            obs_pa_err = np.zeros(obs_sep.size)
+
+            for i in np.arange(np.sum(corr_terms)):
+                # Transform the uncertainties from RA/Dec to sep/PA
+                obs_sep_err[i], obs_pa_err[i], _ = transform_errors(
+                    backtracks.ras[corr_terms][i], backtracks.decs[corr_terms][i],
+                    backtracks.raserr[corr_terms][i], backtracks.decserr[corr_terms][i],
+                    backtracks.rho[corr_terms][i], radec2seppa)
+
+            axs['B'].errorbar(obs_times[corr_terms].decimalyear, obs_sep,
+                              yerr=obs_sep_err, color="tab:gray",
+                              ecolor='tomato', linestyle="none",
+                              marker='o', ms=5., mew=1.5, mec='tomato')
+
+            axs['C'].errorbar(obs_times[corr_terms].decimalyear, obs_pa,
+                              yerr=obs_pa_err, color="tab:gray",
+                              ecolor='tomato', linestyle="none",
+                              marker='o', ms=5., mew=1.5, mec='tomato')
+
     axs['A'].invert_xaxis()
     axs['A'].axis('equal')
     axs['A'].set_xlabel("Delta RA (mas)")
     axs['A'].set_ylabel("Delta DEC (mas)")
+    axs['A'].legend()
     axs['B'].set_xlabel('Date (year)')
     axs['C'].set_xlabel('Date (year)')
-    axs['B'].set_ylabel('Separation (mas)')
-    axs['C'].set_ylabel('PA (degrees)')
 
-    # plot the datapoints that are not corr_terms in the sep and PA plots, error calculation taken from Orbitize!
-    sep,pa=radec2seppa(backtracks.ras[~corr_terms],backtracks.decs[~corr_terms])
-    sep_err=0.5*backtracks.raserr[~corr_terms]+0.5*backtracks.decserr[~corr_terms]
-    pa_err=np.degrees(sep_err/sep)
-    axs['B'].errorbar(obs_times.decimalyear[~corr_terms],sep,yerr=sep_err,color="tomato",linestyle="", zorder=5)
-    axs['C'].errorbar(obs_times.decimalyear[~corr_terms],pa,yerr=pa_err,color="tomato",linestyle="", zorder=5)
-
-    # plot the corr_terms datapoints with a conversion in the sep and PA plots
-    sep, pa = radec2seppa(backtracks.ras[corr_terms],backtracks.decs[corr_terms])
-    for i in np.arange(np.sum(corr_terms)):
-        sep_err,pa_err,rho2 = transform_errors(backtracks.ras[corr_terms][i], backtracks.decs[corr_terms][i],
-                                                               backtracks.raserr[corr_terms][i], backtracks.decserr[corr_terms][i], backtracks.rho[corr_terms][i], radec2seppa)
-        axs['B'].errorbar(obs_times.decimalyear[corr_terms][i], sep[i], yerr=sep_err, color="tomato", linestyle="", marker='.', zorder=5)
-        axs['C'].errorbar(obs_times.decimalyear[corr_terms][i], pa[i], yerr=pa_err, color="tomato", linestyle="", marker='.', zorder=5)
-
-    axs['A'].legend()
+    if plot_radec:
+        axs['B'].set_ylabel('Delta RA (mas)')
+        axs['C'].set_ylabel('Delta DEC (mas)')
+    else:
+        axs['B'].set_ylabel('Separation (mas)')
+        axs['C'].set_ylabel('PA (degrees)')
 
     plt.tight_layout()
 
     target_name = backtracks.target_name.replace(' ', '_')
-    plt.savefig(f"{fileprefix}{target_name}_model_stationary_backtracks"+filepost, dpi=300, bbox_inches='tight')
+    plt.savefig(f"{fileprefix}{target_name}_stationary_backtracks"+filepost, dpi=300, bbox_inches='tight')
 
     return fig
