@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 import astropy.units as u
+from scipy.optimize import minimize
 import dynesty
 import novas.compat as novas
 import numpy as np
@@ -111,7 +112,14 @@ class System():
         self.decs = astrometry[2]
         self.decserr = astrometry[4]
         self.rho = astrometry[5]
-        
+
+        # choose time of reference observation of relative candidate position (defaults to the first observation)
+        if 'ref_epoch_idx' in kwargs:
+            self.ref_epoch_idx = kwargs['ref_epoch_idx']
+            self.ref_epoch = self.epochs[self.ref_epoch_idx]
+        else:
+            self.ref_epoch_idx = 0
+            self.ref_epoch = self.epochs[self.ref_epoch_idx]
 
         if 'query_file' in kwargs and kwargs['query_file'] is not None:
             self.gaia_id = int(Path(kwargs['query_file']).stem.split('_')[-1])
@@ -181,32 +189,9 @@ class System():
         [ra_dec_corr*sig_ra*sig_dec,sig_dec**2,sig_dec*sig_pmra*dec_pmra_corr,sig_dec*sig_pmdec*dec_pmdec_corr,sig_dec*sig_parallax*dec_parallax_corr],
         [ra_pmra_corr*sig_ra*sig_pmra,dec_pmra_corr*sig_pmra*sig_dec,sig_pmra**2,sig_pmra*sig_pmdec*pmra_pmdec_corr,sig_pmra*sig_parallax*parallax_pmra_corr],[sig_pmdec*sig_ra*ra_pmdec_corr,sig_pmdec*sig_dec*dec_pmdec_corr,sig_pmdec*sig_pmra*pmra_pmdec_corr,sig_pmdec**2,sig_pmdec*sig_parallax*parallax_pmdec_corr],[sig_parallax*sig_ra*ra_parallax_corr,sig_parallax*sig_dec*dec_parallax_corr,sig_parallax*sig_pmra*parallax_pmra_corr,sig_parallax*sig_pmdec*parallax_pmdec_corr,sig_parallax**2]])
         self.HostStarPriors = HostStarPriors(self.host_mean,self.host_cov)
-        
-        # initial estimate for background star scenario (best guesses)
-        init_host_coord = SkyCoord(ra=self.rao*u.deg, dec=self.deco*u.deg, distance=Distance(parallax=self.paro*u.mas), pm_ra_cosdec=self.pmrao*u.mas/u.yr, pm_dec=self.pmdeco*u.mas/u.yr, obstime=Time(self.gaia_epoch,format='jyear',scale='tcb'))
-        # choose time of reference observation of relative candidate position (defaults to the first observation)
-        if 'ref_epoch_idx' in kwargs:
-            self.ref_epoch_idx = kwargs['ref_epoch_idx']
-            self.ref_epoch = self.epochs[self.ref_epoch_idx]
-        else:
-            self.ref_epoch_idx = 0
-            self.ref_epoch = self.epochs[self.ref_epoch_idx]
-        # propagate host position from Gaia epoch (2016.0 for DR3) to reference observation epoch 
-        init_host_coord_at_obs = init_host_coord.apply_space_motion(Time(self.ref_epoch, format='jd'))
-        # apply measurement of relative astrometry to get candidate in absolute coordinates at time of observation
-        init_cand_coord_at_obs = init_host_coord_at_obs.spherical_offsets_by(self.ras[self.ref_epoch_idx] * u.mas, self.decs[self.ref_epoch_idx] * u.mas)
-        init_cand_coord = SkyCoord(ra=init_cand_coord_at_obs.ra, dec=init_cand_coord_at_obs.dec, distance=Distance(parallax=self.paro*u.mas), pm_ra_cosdec=self.pmrao*u.mas/u.yr, pm_dec=self.pmdeco*u.mas/u.yr, obstime=Time(self.ref_epoch, format='jd'))
-        # propagate candidate position from epoch of observation to Gaia epoch
-        tdiff = Time(self.ref_epoch, format='jd').decimalyear-self.gaia_epoch
-        init_cand_coord_at_gaia = init_cand_coord.apply_space_motion(Time(tdiff+self.gaia_epoch,format='jyear',scale='tcb'))
-        
-        # not sure which of these is used anymore
-        self.ra0 = init_cand_coord_at_gaia.ra.value
-        self.dec0 = init_cand_coord_at_gaia.dec.value
-        self.pmra0 = self.pmrao # mas/yr
-        self.pmdec0 = self.pmdeco # mas/yr
-        self.par0 = self.paro/10 # mas
-        self.radvel0 = 0 # km/s
+
+        # set inital guess for position at gaia epoch
+        self.set_initial_position()
 
         # create parameter set for stationary case
         # params = ra, dec, pmra, pmdec, par, ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host
@@ -238,6 +223,48 @@ class System():
             print('[BACKTRACK INFO]: transformed cat entry for host')
 
         # this converts the Epoch from the Gaia ref_epoch (2016 for DR3) to 2000 following ICRS
+
+    def set_initial_position(self):
+        # initial estimate for background star scenario (best guesses)
+        print(f'[BACKTRACK INFO]: Estimating candidate position if stationary in RA,Dec @ {self.gaia_epoch} from observation #'+str(self.ref_epoch_idx))
+        # we'll do a rough estimate using astropy, then minimize the distance between
+        # the novas projection and the specified observation using scipy's BFGS with
+        # RA,DEC @ Gaia epoch as free parameters.
+        
+        # educated guess with SkyCoord transformations
+        init_host_coord = SkyCoord(ra=self.rao*u.deg, dec=self.deco*u.deg, distance=Distance(parallax=self.paro*u.mas), pm_ra_cosdec=self.pmrao*u.mas/u.yr, pm_dec=self.pmdeco*u.mas/u.yr, obstime=Time(self.gaia_epoch,format='jyear',scale='tcb'))
+        # propagate host position from Gaia epoch (2016.0 for DR3) to reference observation epoch 
+        init_host_coord_at_obs = init_host_coord.apply_space_motion(Time(self.ref_epoch, format='jd'))
+        # apply measurement of relative astrometry to get candidate in absolute coordinates at time of observation
+        init_cand_coord_at_obs = init_host_coord_at_obs.spherical_offsets_by(self.ras[self.ref_epoch_idx] * u.mas, self.decs[self.ref_epoch_idx] * u.mas)
+        init_cand_coord = SkyCoord(ra=init_cand_coord_at_obs.ra, dec=init_cand_coord_at_obs.dec, distance=Distance(parallax=self.paro*u.mas), pm_ra_cosdec=self.pmrao*u.mas/u.yr, pm_dec=self.pmdeco*u.mas/u.yr, obstime=Time(self.ref_epoch, format='jd'))
+        # propagate candidate position from epoch of observation to Gaia epoch
+        tdiff = Time(self.ref_epoch, format='jd').decimalyear-self.gaia_epoch
+        init_cand_coord_at_gaia = init_cand_coord.apply_space_motion(Time(self.gaia_epoch+tdiff,format='jyear',scale='tcb'))
+        ra0 = init_cand_coord_at_gaia.ra.value
+        dec0 = init_cand_coord_at_gaia.dec.value
+
+        def dummy_loglike(radec):
+            ra, dec = radec
+            dummy_param = ra, dec, 0, 0, 0, self.rao, self.deco, self.pmrao, self.pmdeco, self.paro, self.radvelo
+            xs, ys = self.radecdists([utc2tt(self.ref_epoch)], dummy_param)
+
+            distance = np.linalg.norm(np.array([self.ras[self.ref_epoch_idx],self.decs[self.ref_epoch_idx]])-np.array([xs[0],ys[0]]))
+            
+            return distance
+        
+        # minimize distance between these points (bounds are 5 mas, tolerance might need adjusting?)
+        bound = 5e-5
+        init_result = minimize(dummy_loglike, np.array([ra0,dec0]), tol=1e-15, method='Nelder-Mead', bounds=((ra0-bound, ra0+bound), (dec0-bound, dec0+bound)))
+
+        # not sure which of these is used anymore
+        self.ra0 = init_result.x[0]
+        self.dec0 = init_result.x[1]
+        self.pmra0 = self.pmrao # mas/yr
+        self.pmdec0 = self.pmdeco # mas/yr
+        self.par0 = self.paro/10 # mas
+        self.radvel0 = 0 # km/s
+        
 
     def query_astrometry(self, nearby_window: float = 0.5):
         # resolve target in simbad
