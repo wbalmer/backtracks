@@ -23,7 +23,8 @@ jobs:
         run: |
           sudo apt-get install pandoc
           pip install --upgrade pip
-          pip install flake8 pytest pytest-cov sphinx
+          pip install flake8 pytest
+          pip install -r docs/requirements.tx
           pip install .
 
       - name: Lint with flake8
