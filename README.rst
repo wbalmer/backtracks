@@ -32,12 +32,13 @@ A `Jupyter notebook <https://backtracks.readthedocs.io/en/latest/tutorial.html>`
 Details
 -------
 
-eDR3 Distance prior summary file from this [source](https://arxiv.org/pdf/2012.05220.pdf), published in [Bailer-Jones+2021](https://arxiv.org/abs/2012.05220).
+* eDR3 Distance prior summary file from `Bailer-Jones et al. (2021) <https://ui.adsabs.harvard.edu/abs/2021AJ....161..147B/abstract`_.
 
-Current example (HD131399Ab) uses data from Wagner+22 and Nielsen+17. Thank you to Kevin Wagner for providing the latest astrometry!
+* Example of HD 131399Ab uses data from `Wagner et al. (2022) <https://ui.adsabs.harvard.edu/abs/2022AJ....163...80W/abstract>`_ and `Nielsen et al. (2017) <https://ui.adsabs.harvard.edu/abs/2017AJ....154..218N/abstract>`_. Thank you to Kevin Wagner for providing the latest astrometry!
 
-Log-likelihood and some utility functions borrowed heavily from `orbitize!` (BSD 3-clause).
-PPF of multivariate normal borrowed from `pints` (BSD 3-clause).
+* Log-likelihood and some utility functions borrowed heavily from `orbitize! <https://github.com/sblunt/orbitize/>`_ (BSD 3-clause).
+
+* PPF of multivariate normal borrowed from `pints <https://github.com/pints-team/pints`_ (BSD 3-clause).
 
 Installation
 ============
