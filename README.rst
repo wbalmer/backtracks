@@ -32,7 +32,7 @@ A `Jupyter notebook <https://backtracks.readthedocs.io/en/latest/tutorial.html>`
 Details
 -------
 
-* eDR3 Distance prior summary file from `Bailer-Jones et al. (2021) <https://ui.adsabs.harvard.edu/abs/2021AJ....161..147B/abstract`_.
+* eDR3 Distance prior summary file from `Bailer-Jones et al. (2021) <https://ui.adsabs.harvard.edu/abs/2021AJ....161..147B/abstract>`_.
 
 * Example of HD 131399Ab uses data from `Wagner et al. (2022) <https://ui.adsabs.harvard.edu/abs/2022AJ....163...80W/abstract>`_ and `Nielsen et al. (2017) <https://ui.adsabs.harvard.edu/abs/2017AJ....154..218N/abstract>`_. Thank you to Kevin Wagner for providing the latest astrometry!
 
@@ -43,11 +43,11 @@ Details
 Installation
 ============
 
-Currently requires and python 3.9 ish and `astropy`, `corner`, `dynesty`, `matplotlib`, `numpy`, `novas`, `novas_de405`, and their dependencies. Note that `novas` is not supported on Windows. You can create a working environment using conda+pip via a few lines of code:
+Currently requires and python 3.9-3.11 ish and `astropy`, `corner`, `dynesty`, `matplotlib`, `numpy`, `novas`, `novas_de405`, and their dependencies. Note that `novas` is not supported on Windows. You can create a working environment using conda+pip via a few lines of code:
 
 .. code-block:: console
 
-    $ conda create python=3.9 -n backtrack
+    $ conda create python=3.11 -n backtrack
     $ conda activate backtrack
     $ conda install pip
     $ pip install backtracks

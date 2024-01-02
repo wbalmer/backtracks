@@ -3,11 +3,11 @@
 Installation
 ============
 
-Currently requires and python 3.9 ish and `astropy`, `corner`, `dynesty`, `matplotlib`, `numpy`, `novas`, `novas_de405`, `orbitize` and their dependencies. Note that `novas` is not supported on Windows. You can create a working environment using conda+pip via a few lines of code:
+Currently requires and python 3.9-3.11 ish and `astropy`, `corner`, `dynesty`, `matplotlib`, `numpy`, `novas`, `novas_de405`, `orbitize` and their dependencies. Note that `novas` is not supported on Windows. You can create a working environment using conda+pip via a few lines of code:
 
 .. code-block:: console
 
-    $ conda create python=3.9 -n backtracks
+    $ conda create python=3.11 -n backtracks
     $ conda activate backtracks
     $ conda install pip
     $ pip install backtracks
@@ -16,7 +16,7 @@ Or, to clone the repo and install in development mode (we recommend this, as the
 
 .. code-block:: console
 
-    $ conda create python=3.9 -n backtracks
+    $ conda create python=3.11 -n backtracks
     $ conda activate backtracks
     $ conda install pip
     $ git clone https://github.com/wbalmer/backtracks.git

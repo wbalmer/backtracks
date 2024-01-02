@@ -16,8 +16,7 @@ bgstar_emcee.py
 *SAO*
 .pyproject.toml.sw
 .pytest_cache/
-tests/HD_131399_A_*.png
-tests/HD_131399_A_dynestyrun_results.pkl
+tests/HD_131399A_*
 tests/dynesty.save
 tests/yses2*
 tests/YSES_2*
