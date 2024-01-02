@@ -11,6 +11,7 @@ coverage.xml
 htmlcov/
 .tox/
 bgstar_emcee.py
+.vscode*
 *beta_pic*
 *SAO*
 .pyproject.toml.sw
