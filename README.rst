@@ -38,7 +38,7 @@ Details
 
 * Log-likelihood and some utility functions borrowed heavily from `orbitize! <https://github.com/sblunt/orbitize/>`_ (BSD 3-clause).
 
-* PPF of multivariate normal borrowed from `pints <https://github.com/pints-team/pints`_ (BSD 3-clause).
+* PPF of multivariate normal borrowed from `pints <https://github.com/pints-team/pints>`_ (BSD 3-clause).
 
 Installation
 ============
