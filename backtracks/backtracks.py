@@ -198,7 +198,7 @@ class System():
         self.stationary_params = [self.ra0, self.dec0, 0, 0, 0, self.rao, self.deco, self.pmrao, self.pmdeco, self.paro, self.radvelo]
         # Compute useful chi2 value
         self.stationary_loglike = self.loglike(self.stationary_params)
-        self.stationary_chi2_red = np.log(-2.*self.stationary_loglike)/(len(self.epochs)-self.ndim)
+        self.stationary_chi2_red = -2.*self.stationary_loglike/((2*(len(self.epochs)-1))-self.ndim)
 
         jd_start, jd_end, number = ephem_open()
         print('[BACKTRACK INFO]: Opened ephemeris file')
@@ -582,7 +582,7 @@ class System():
 
         # Compute useful chi2 value
         self.median_loglike = self.loglike(self.run_median)
-        self.median_chi2_red = np.log(-2.*self.median_loglike)/(len(self.epochs)-self.ndim)
+        self.median_chi2_red = -2.*self.median_loglike/((2*len(self.epochs))-self.ndim)
 
         return self.results
 
@@ -604,7 +604,7 @@ class System():
 
         # recompute useful chi2 value
         self.median_loglike = self.loglike(self.run_median)
-        self.median_chi2_red = np.log(-2.*self.median_loglike)/(len(self.epochs)-self.ndim)
+        self.median_chi2_red = -2.*self.median_loglike/((2*len(self.epochs))-self.ndim)
 
     def generate_plots(
             self,
