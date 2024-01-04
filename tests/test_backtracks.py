@@ -13,6 +13,7 @@ class TestBacktracks:
             "HD 131399 A",
             f"{self.test_dir}scorpions1b_orbitizelike.csv",
             nearby_window=0.5,
+            ref_epoch_idx=0,
             fileprefix=self.test_dir,
         )
 
@@ -23,6 +24,7 @@ class TestBacktracks:
             "HD_131399_A_corner_backtracks.png",
             "HD_131399_A_evidence_backtracks.png",
             "HD_131399_A_model_backtracks.png",
+            "HD_131399A_stationary_backtracks.png",
             "HD_131399_A_nearby_gaia_distribution.png",
             "HD_131399_A_dynestyrun_results.pkl",
             "gaia_query_6204835284262018688.fits",
@@ -36,6 +38,17 @@ class TestBacktracks:
     def test_system(self) -> None:
 
         assert isinstance(self.bt_system, System)
+
+    def test_statplot(self) -> None:
+
+        self.bt_system.generate_stationary_plot(
+            days_backward=3.*365.,
+            days_forward=3.*365.,
+            step_size=50.,
+            plot_radec=False,
+            fileprefix=self.test_dir,
+            filepost='.png',
+        )
 
     def test_fit(self) -> None:
 
@@ -57,7 +70,6 @@ class TestBacktracks:
             days_backward=3.*365.,
             days_forward=3.*365.,
             step_size=50.,
-            ref_epoch=None,
             plot_radec=False,
             plot_stationary=False,
             fileprefix=self.test_dir,
