@@ -1,10 +1,12 @@
 backtracks
 ==========
 
-| .. image:: picture.jpeg
+.. image:: docs/_static/backtracks-logo-dark.svg
    :align: center
 
-| .. image:: https://img.shields.io/pypi/v/backtracks
+
+
+.. image:: https://img.shields.io/pypi/v/backtracks
    :target: https://pypi.python.org/pypi/backtracks
 
 .. image:: https://github.com/wbalmer/backtracks/actions/workflows/main.yml/badge.svg
@@ -16,7 +18,9 @@ backtracks
 .. image:: https://img.shields.io/github/license/wbalmer/backtracks
    :target: https://github.com/wbalmer/backtracks/blob/main/LICENSE
 
-| `backtracks` is a python package to fit relative astrometry with background helical motion tracks, to discern directly imaged planets :ringed_planet: from contaminant sources :dizzy: :star:
+
+
+`backtracks` is a python package to fit relative astrometry with background helical motion tracks, to discern directly imaged planets :ringed_planet: from contaminant sources :dizzy: :star:
 
 The code is written and developed by Gilles Otten (@gotten), William Balmer (@wbalmer), and Tomas Stolker (@tomasstolker).
 
