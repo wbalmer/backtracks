@@ -14,7 +14,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../'))
 
-import sphinx_readable_theme
+# import sphinx_readable_theme
 
 # -- Project information -----------------------------------------------------
 
@@ -49,12 +49,18 @@ exclude_patterns = ['_build',
 
 # -- Options for HTML output -------------------------------------------------
 
-html_theme_path = [sphinx_readable_theme.get_html_theme_path()]
-html_theme = 'readable'
+# html_theme_path = [sphinx_readable_theme.get_html_theme_path()]
+# html_theme = 'readable'
+
+html_theme = "pydata_sphinx_theme"
 
 html_theme_options = {
-    # 'github_url': 'https://github.com/wbalmer/backtracks',
-    # 'use_edit_page_button': True,
+    'github_url': 'https://github.com/wbalmer/backtracks',
+    'use_edit_page_button': False,
+    "logo": {
+      "image_light": "_static/backtracks-logo-light.svg",
+      "image_dark": "_static/backtracks-logo-dark.svg",
+   }
 }
 
 html_context = {
@@ -64,6 +70,6 @@ html_context = {
     "doc_path": "docs",
 }
 
-html_static_path = []
+html_static_path = ['_static']
 
 html_search_language = 'en'

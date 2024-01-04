@@ -11,3 +11,4 @@ Documentation for *backtracks*
    installation
    tutorial.ipynb
    modules
+   about
