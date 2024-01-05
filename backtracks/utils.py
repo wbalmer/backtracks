@@ -26,7 +26,7 @@ def pol2car(sep, pa, seperr, paerr, corr=np.nan):
 
     ra, dec = seppa2radec(sep, pa)
     raerr, decerr, corr2 = transform_errors(sep, pa, seperr, paerr, corr, seppa2radec)
-    return ra, dec, decerr, raerr, corr2
+    return ra, dec, raerr, decerr, corr2
 
 def radec2seppa(ra, dec, mod180=False):
     """
