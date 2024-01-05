@@ -10,20 +10,21 @@ def pol2car(sep, pa, seperr, paerr, corr=np.nan):
     raerr, decerr, corr2 = transform_errors(sep, pa, seperr, paerr, corr, seppa2radec)
     return ra, dec, decerr, raerr, corr2
 
-
 def radec2seppa(ra, dec, mod180=False):
     """
-    This function is reproduced here from the orbitize! pacakge, written by S. Blunt et al and distributed under the BSD 3-Clause License
+    This function is reproduced here from the orbitize! package, written by S. Blunt et al and distributed under the BSD 3-Clause License
     Convenience function for converting from
     right ascension/declination to separation/
     position angle.
+
     Args:
         ra (np.array of float): array of RA values, in mas
         dec (np.array of float): array of Dec values, in mas
         mod180 (Bool): if True, output PA values will be given
-        in range [180, 540) (useful for plotting short
-        arcs with PAs that cross 360 during observations)
-        (default: False)
+            in range [180, 540) (useful for plotting short
+            arcs with PAs that cross 360 during observations)
+            (default: False)
+
     Returns:
         tuple of float: (separation [mas], position angle [deg])
     """
@@ -41,9 +42,11 @@ def seppa2radec(sep, pa):
     """
     This function is reproduced here from the orbitize! package, written by S. Blunt et al and distributed under the BSD 3-Clause License
     Convenience function to convert sep/pa to ra/dec
+
     Args:
         sep (np.array of float): array of separation in mas
         pa (np.array of float): array of position angles in degrees
+
     Returns:
         tuple: (ra [mas], dec [mas])
     """
@@ -100,11 +103,11 @@ def transform_uniform(x,a,b):
     This function draws values from the uniform distribution when given values between 0 and 1.
     
     Args:
-        x (float): array of unit size (0 to 1) values used to draw values from the distribution
-        a (float): lower limit of the uniform distribution 
+        x (float): array of unit size values (0 to 1) used to draw values from the distribution
+        a (float): lower limit of the uniform distribution
         b (float): upper limit of the uniform distribution
     Returns:
-        Values drawn from uniform distribution 
+        Values drawn from uniform distribution
     """
 
     return a + (b-a)*x
@@ -115,9 +118,10 @@ def transform_normal(x, mu, sigma):
     This function draws values from the normal distribution when given values between 0 and 1.
     
     Args:
-        x (float): array of unit size (0 to 1) values used to draw values from the distribution
+        x (float): array of unit size values (0 to 1) used to draw values from the distribution
         mu (float): mean of the normal distribution
         sigma (float): standard deviation of the normal distribution
+
     Returns:
         Values drawn from normal distribution
     """
@@ -130,14 +134,19 @@ def transform_gengamm(x, L=1.35e3, alpha=1, beta=2):
     This function draws distances in parsec from the generalized gamma distribution (GGD) when given values between 0 and 1.
 
     Args:
-        x (float): array of unit size (0 to 1) values used to draw values from the distribution
-        L (float): scale parameter a of the GGD [parsec]
-        alpha (float): shape parameter p of the GGD
-        beta (float): shape parameter d-1 of the GGD
+        x (float): array of unit size values (0 to 1) used to draw values from the distribution
+        L (float): scale parameter of the GGD [parsec]
+        alpha (float): shape parameter
+        beta (float): shape parameter
+
     Returns:
         Values drawn from generalized gamma distribution in parsec
-    Reference:
-        C. A. L. Bailer-Jones et al 2021 AJ 161 147 (the PPF of equation 3)
+
+    References:
+        C. A. L. Bailer-Jones et al 2021 AJ 161 147 (The GGD used as basis for this PPF is defined by Equation 3)
+
+    Notes:
+        The exponentially decreasing space density (EDSD) of Bailer-Jones et al 2018 (DR2) is equivalent to the GGD with alpha=1 and beta=2.
     """
 
     return L*(gammaincinv((beta+1)/alpha,x)**(1/alpha))
@@ -148,6 +157,7 @@ def utc2tt(jd_utc):
     
     Args:
         jd_utc (float): array with Julian Dates
+
     Returns:
         Returns Julian Dates that are the TT equivalent of the input UTC JD. 
     """
