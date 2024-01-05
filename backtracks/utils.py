@@ -6,6 +6,24 @@ from scipy.special import gammainc, gammaincc, gammainccinv, gammaincinv
 from astropy.time import Time
 
 def pol2car(sep, pa, seperr, paerr, corr=np.nan):
+    """
+    This function converts Separation, PA, and their errors to deltaRA, deltaDEC and their errors.
+
+    Args:
+        sep (float): array of separation values in mas 
+        pa (float): array of position angle values in degrees
+        seperr (float): array of separation error values in mas
+        paerr (float): array of position angle error values in degrees
+        corr (float): array of correlation values [-1,1] default: nan
+
+    Returns:
+        ra (float): array of right ascension values in mas
+        dec (float): array of declination values in mas
+        raerr (float): array of right ascension error values in mas
+        decerr (float): array of declination error values in mas
+        corr2 (float): array of correlation values [-1,1] default: nan
+    """
+
     ra, dec = seppa2radec(sep, pa)
     raerr, decerr, corr2 = transform_errors(sep, pa, seperr, paerr, corr, seppa2radec)
     return ra, dec, decerr, raerr, corr2
@@ -143,10 +161,13 @@ def transform_gengamm(x, L=1.35e3, alpha=1, beta=2):
         Values drawn from generalized gamma distribution in parsec
 
     References:
-        C. A. L. Bailer-Jones et al 2021 AJ 161 147 (The GGD used as basis for this PPF is defined by Equation 3)
+        C. A. L. Bailer-Jones et al 2021 AJ 161 147 (DR3 distances; The GGD used as basis for this PPF is defined by Equation 3)
+        C. A. L. Bailer-Jones et al 2018 AJ 156 58 (DR2 distances; Special case of GGD)
+        Stacy, E. W. (1962). A Generalization of the Gamma Distribution. The Annals of Mathematical Statistics, 33(3), 1187–1192. 
 
     Notes:
         The exponentially decreasing space density (EDSD) of Bailer-Jones et al 2018 (DR2) is equivalent to the GGD with alpha=1 and beta=2.
+        Parameters L, alpha and beta are equivalent to parameters a, p and d-1 from the original paper by Stacy (1962). 
     """
 
     return L*(gammaincinv((beta+1)/alpha,x)**(1/alpha))
