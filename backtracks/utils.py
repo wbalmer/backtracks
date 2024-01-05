@@ -17,11 +17,7 @@ def pol2car(sep, pa, seperr, paerr, corr=np.nan):
         corr (float): array of correlation values [-1,1] default: nan
 
     Returns:
-        ra (float): array of right ascension values in mas
-        dec (float): array of declination values in mas
-        raerr (float): array of right ascension error values in mas
-        decerr (float): array of declination error values in mas
-        corr2 (float): array of correlation values [-1,1] default: nan
+        Tuple of float: (ra [mas], dec [mas], raerr [mas], decerr [mas], corr2 [-])
     """
 
     ra, dec = seppa2radec(sep, pa)
