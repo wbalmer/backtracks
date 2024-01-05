@@ -1,7 +1,5 @@
-.. _api:
-
-API documentation
-=================
+backtracks
+==========
 
 .. toctree::
    :maxdepth: 4
