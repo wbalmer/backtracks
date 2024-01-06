@@ -10,14 +10,14 @@ def pol2car(sep, pa, seperr, paerr, corr=np.nan):
     This function converts Separation, PA, and their errors to deltaRA, deltaDEC and their errors.
 
     Args:
-        sep (float): array of separation values in mas 
-        pa (float): array of position angle values in degrees
-        seperr (float): array of separation error values in mas
-        paerr (float): array of position angle error values in degrees
-        corr (float): array of correlation values [-1,1] default: nan
+        sep (np.array of float): array of separation values in mas 
+        pa (np.array of float): array of position angle values in degrees
+        seperr (np.array of float): array of separation error values in mas
+        paerr (np.array of float): array of position angle error values in degrees
+        corr (np.array of float): array of correlation values [-1,1] default: nan
 
     Returns:
-        Tuple of float: (ra [mas], dec [mas], raerr [mas], decerr [mas], corr2 [-])
+        tuple of float: (ra [mas], dec [mas], raerr [mas], decerr [mas], corr2 [-])
     """
 
     ra, dec = seppa2radec(sep, pa)
@@ -117,7 +117,7 @@ def transform_uniform(x,a,b):
     This function draws values from the uniform distribution when given values between 0 and 1.
     
     Args:
-        x (float): array of unit size values (0 to 1) used to draw values from the distribution
+        x (np.array of float): array of unit size values (0 to 1) used to draw values from the distribution
         a (float): lower limit of the uniform distribution
         b (float): upper limit of the uniform distribution
     Returns:
@@ -132,7 +132,7 @@ def transform_normal(x, mu, sigma):
     This function draws values from the normal distribution when given values between 0 and 1.
     
     Args:
-        x (float): array of unit size values (0 to 1) used to draw values from the distribution
+        x (np.array of float): array of unit size values (0 to 1) used to draw values from the distribution
         mu (float): mean of the normal distribution
         sigma (float): standard deviation of the normal distribution
 
@@ -148,7 +148,7 @@ def transform_gengamm(x, L=1.35e3, alpha=1, beta=2):
     This function draws distances in parsec from the generalized gamma distribution (GGD) when given values between 0 and 1.
 
     Args:
-        x (float): array of unit size values (0 to 1) used to draw values from the distribution
+        x (np.array of float): array of unit size values (0 to 1) used to draw values from the distribution
         L (float): scale parameter of the GGD [parsec]
         alpha (float): shape parameter
         beta (float): shape parameter
@@ -157,13 +157,13 @@ def transform_gengamm(x, L=1.35e3, alpha=1, beta=2):
         Values drawn from generalized gamma distribution in parsec
 
     References:
-        C. A. L. Bailer-Jones et al 2021 AJ 161 147 (DR3 distances; The GGD used as basis for this PPF is defined by Equation 3)
-        C. A. L. Bailer-Jones et al 2018 AJ 156 58 (DR2 distances; Special case of GGD)
-        Stacy, E. W. (1962). A Generalization of the Gamma Distribution. The Annals of Mathematical Statistics, 33(3), 1187–1192. 
+        * Bailer-Jones, C. A. L. et al 2021 AJ 161 147 (DR3 distances; The GGD used as basis for this PPF is defined by Equation 3)
+        * Bailer-Jones, C. A. L. et al 2018 AJ 156 58 (DR2 distances; Special case of GGD)
+        * Stacy, E. W. (1962). A Generalization of the Gamma Distribution. The Annals of Mathematical Statistics, 33(3), 1187–1192. 
 
     Notes:
-        The exponentially decreasing space density (EDSD) of Bailer-Jones et al 2018 (DR2) is equivalent to the GGD with alpha=1 and beta=2.
-        Parameters L, alpha and beta are equivalent to parameters a, p and d-1 from the original paper by Stacy (1962). 
+        * The exponentially decreasing space density (EDSD) of Bailer-Jones et al 2018 (DR2) is equivalent to the GGD with alpha=1 and beta=2.
+        * Parameters L, alpha and beta are equivalent to parameters a, p and d-1 from the original paper by Stacy (1962). 
     """
 
     return L*(gammaincinv((beta+1)/alpha,x)**(1/alpha))
@@ -181,8 +181,18 @@ def utc2tt(jd_utc):
 
     return Time(jd_utc,scale="utc",format="jd").tt.jd
 
-class HostStarPriors(): # stripped version from pints (MultivariateGaussianLogPrior from https://github.com/pints-team/pints/blob/main/pints/_log_priors.py), BSD3-clause
-    
+class HostStarPriors(): 
+    """
+    Class to draw values from multivariate normal distribution using pseudoinverse.
+
+    Args:
+        mean (np.array of float): M array of mean values of multivariate normal
+        cov (np.array of float): M by M array of covariance matrix of multivariate normal
+
+    Notes:
+        * This class is a stripped down version of MultivariateGaussianLogPrior in `pints <https://github.com/pints-team/pints/blob/main/pints/_log_priors.py>`__ (BSD3-clause)
+    """
+
     def __init__(self, mean, cov): # setting up distribution, this is done only once so we dont have to bother with a fast Cholesky inversion. Host star parameter distribution doesnt change.
         self._mean = mean
         self._cov = cov
@@ -212,9 +222,19 @@ class HostStarPriors(): # stripped version from pints (MultivariateGaussianLogPr
             self._mu1.append(mu1)
             self._mu2.append(mu2)
    
-    def transform_normal_multivariate(self, ps): # pulling from distribution with random number between 0 and 1
-        n_samples = ps.shape[0]
-        n_params = ps.shape[1]
+    def transform_normal_multivariate(self, x): # pulling from distribution with random number between 0 and 1
+        """
+        This function returns values drawn from the multivariate normal when given numbers between 0 and 1.
+        
+        Args:
+            x (np.array of float): N by M array of values between 0 and 1 used to draw values from the distribution
+
+        Returns:
+            tuple: (M np.arrays of length N)
+        """
+
+        n_samples = x.shape[0]
+        n_params = x.shape[1]
         
         icdfs = np.zeros((n_samples, n_params))
         for j in range(n_samples):
@@ -227,5 +247,5 @@ class HostStarPriors(): # stripped version from pints (MultivariateGaussianLogPr
                     mu = self._mu1[i - 1] + np.matmul(
                         self._sigma12_sigma22_inv_l[i - 1],
                         (np.array(icdfs[j, 0:i]) - self._mu2[i - 1]))
-                icdfs[j, i] = norm.ppf(ps[j, i], mu, sigma) 
+                icdfs[j, i] = norm.ppf(x[j, i], mu, sigma) 
         return np.squeeze(np.array_split(icdfs,n_params,axis=1))
