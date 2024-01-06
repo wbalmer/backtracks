@@ -27,12 +27,32 @@ sb.set_context("talk")
 
 
 def tickform(x, pos):
-    # x:  tick value - ie. what you currently see in yticks
-    # pos: a position - ie. the index of the tick (from 0 to 9 in this example)
+    """
+    Function to reformat tick values.
+    
+    Args:
+        x (float): tick value
+        pos (int): index of tick    
+    Returns:
+        Reformatted tick value with 4 decimal places.
+    """
+    
     return '%.4f' % x
 
 
 def diagnostic(backtracks, fileprefix='./', filepost='.pdf'):
+    """
+    Function to plot the dynesty run summary plot.
+
+    Args:
+        backtracks (class): backtracks.System class which carries the needed methods and attributes.
+        fileprefix (str): Prefix to filename. Default "./" for current folder.
+        filepost (str): Postfix to filename. Default ".pdf" for outputting pdf files.
+
+    Returns:
+        fig (figure): Figure object corresponding to the saved plot.
+    """
+
     # Plot results.
     fig, axes = dyplot.runplot(backtracks.results, color='cornflowerblue')
 
@@ -43,6 +63,18 @@ def diagnostic(backtracks, fileprefix='./', filepost='.pdf'):
 
 
 def plx_prior(backtracks, fileprefix='./', filepost='.pdf'):
+    """
+    Function to plot the parallax prior (in mas).
+
+    Args:
+        backtracks (class): backtracks.System class which carries the needed methods and attributes.
+        fileprefix (str): Prefix to filename. Default "./" for current folder.
+        filepost (str): Postfix to filename. Default ".pdf" for outputting pdf files.
+
+    Returns:
+        fig (figure): Figure object corresponding to the saved plot.
+    """
+
     u = np.arange(0., 1, 0.001)
     ppf = 1000./transform_gengamm(u, backtracks.L, backtracks.alpha, backtracks.beta)
 
@@ -60,6 +92,21 @@ def plx_prior(backtracks, fileprefix='./', filepost='.pdf'):
 
 
 def posterior(backtracks, fileprefix='./', filepost='.pdf'):
+    """
+    Function to plot a cornerplot of the posteriors of the fit to a moving background star scenario.
+
+    Args:
+        backtracks (class): backtracks.System class which carries the needed methods and attributes.
+        fileprefix (str): Prefix to filename. Default "./" for current folder.
+        filepost (str): Postfix to filename. Default ".pdf" for outputting pdf files.
+
+    Returns:
+        fig (figure): Figure object corresponding to the saved plot.
+
+    Notes:
+        * Only the five parameters of the background star are plotted.
+    """
+
     labels = ["RA (deg, ep=2016)", "DEC (deg, ep=2016)", "pmra (mas/yr)", "pmdec (mas/yr)", "parallax (mas)"]
     levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2) # 1,2,3 sigma levels for a 2d gaussian
     # plot extended run (right)
@@ -111,7 +158,23 @@ def trackplot(
         filepost='.pdf'
     ):
     """
+    Function to plot a fitted (non-stationary) background star scenario track with the data.
+
+    Args:
+        backtracks (class): backtracks.System class which carries the needed methods and attributes.
+        ref_epoch (float): Julian Date (UTC) as a reference point for the tracks
+        days_backward (float): Days backward from the reference point at which to start tracks
+        days_forward (float): Days forward from the reference point at which to end tracks
+        step_size (float): Step size with which tracks are generated.
+        plot_radec (bool): Option to plot RA vs time and DEC vs time in panels. Default: False for Sep vs time, PA vs time.
+        plot_stationary (bool): Option to overplot a track corresponding to an infinitely far stationary background star. Default: False.
+        fileprefix (str): Prefix to filename. Default "./" for current folder.
+        filepost (str): Postfix to filename. Default ".pdf" for outputting pdf files.
+
+    Returns:
+        fig (figure): Figure object corresponding to the saved plot.
     """
+
     fig, axs = plt.subplot_mosaic(
         '''
         AABB
@@ -311,7 +374,17 @@ def trackplot(
 
 def neighborhood(backtracks, fileprefix='./', filepost='.pdf'):
     """
+    Function to plot the best fitting background star parameters on top of the Gaia priors.
+
+    Args:
+        backtracks (class): backtracks.System class which carries the needed methods and attributes.
+        fileprefix (str): Prefix to filename. Default "./" for current folder.
+        filepost (str): Postfix to filename. Default ".pdf" for outputting pdf files.
+
+    Returns:
+        fig (figure): Figure object corresponding to the saved plot.
     """
+
     # check how unlikely the fit motion is by comparing the distribution to the nearby Gaia distribution
 
     nearby_table = pd.DataFrame(columns=['pmra', 'pmdec', 'parallax'])
@@ -352,7 +425,22 @@ def stationtrackplot(
         filepost='.pdf'
     ):
     """
+    Function to plot an infinitely far stationary scenario track with the data.
+
+    Args:
+        backtracks (class): backtracks.System class which carries the needed methods and attributes.
+        ref_epoch (float): Julian Date (UTC) as a reference point for the tracks
+        days_backward (float): Days backward from the reference point at which to start tracks
+        days_forward (float): Days forward from the reference point at which to end tracks
+        step_size (float): Step size with which tracks are generated.
+        plot_radec (bool): Option to plot RA vs time and DEC vs time in panels. Default: False for Sep vs time, PA vs time.
+        fileprefix (str): Prefix to filename. Default "./" for current folder.
+        filepost (str): Postfix to filename. Default ".pdf" for outputting pdf files.
+    
+    Returns:
+        fig (figure): Figure object corresponding to the saved plot.
     """
+
     fig, axs = plt.subplot_mosaic(
         '''
         AABB

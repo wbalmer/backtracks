@@ -1,8 +1,16 @@
 backtracks package
 ==================
 
-Submodules
-----------
+Module contents
+---------------
+
+.. automodule:: backtracks
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+
 
 backtracks.backtracks module
 ----------------------------
