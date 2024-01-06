@@ -28,10 +28,3 @@ backtracks.utils module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
-
-.. automodule:: backtracks
-   :members:
-   :undoc-members:
-   :show-inheritance:

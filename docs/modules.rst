@@ -1,4 +1,4 @@
-backtracks
+API
 ==========
 
 .. toctree::
