@@ -2,7 +2,7 @@
 # authors: Gilles Otten, William Balmer, Tomas Stolker
 
 # special packages needed: astropy, matplotlib, numpy, novas, novas_de405,
-# dynesty, emcee, orbitize, corner (potentially cython and tqdm if clean pip install crashes)
+# dynesty, emcee, corner (potentially cython and tqdm if clean pip install crashes)
 
 # this code does an analysis with a background star model given delta RA and
 # delta DEC datapoints of a point source wrt a host star
@@ -46,12 +46,12 @@ Gaia.ROW_LIMIT = -1
 class System():
     """
     Class for describing a star system with a companion candidate.
-    
+
     """
 
     def __init__(self, target_name: str, candidate_file: str, nearby_window: float = 0.5, fileprefix = './', ndim = 11, **kwargs):
         """
-        Args: 
+        Args:
             target_name (str): Target name which will be resolved by SIMBAD into Gaia DR3 ID
             candidate_file (str): .csv file containing the to be test companion coordinates in Orbitize! format
             nearby_window (float): Default 0.5 [degrees]
@@ -165,7 +165,7 @@ class System():
         self.pmrao = target_gaia['pmra'][0] # mas/yr
         self.pmdeco = target_gaia['pmdec'][0] # mas/yr
         self.paro = target_gaia['parallax'][0] # mas
-        
+
         sig_ra = target_gaia['ra_error'][0]*u.mas.to(u.deg) # mas
         sig_dec = target_gaia['dec_error'][0]*u.mas.to(u.deg)
         sig_pmra = target_gaia['pmra_error'][0]
@@ -186,7 +186,7 @@ class System():
                 self.rv_host_method='uniform'
                 self.rv_lower,self.rv_upper=kwargs['rv_host_params'] # e.g., rv_host_params=(-10,10)
                 self.radvelo = np.mean([self.rv_lower,self.rv_upper])
-            elif kwargs['rv_host_method'].lower() == 'normal': 
+            elif kwargs['rv_host_method'].lower() == 'normal':
                 self.rv_host_method='normal'
                 self.radvelo,self.sig_rv=kwargs['rv_host_params'] # e.g., rv_host_params=(10,0.5)
         else: # if not set, it is the default gaia
@@ -249,10 +249,10 @@ class System():
         # we'll do a rough estimate using astropy, then minimize the distance between
         # the novas projection and the specified observation using scipy's BFGS with
         # RA,DEC @ Gaia epoch as free parameters.
-        
+
         # educated guess with SkyCoord transformations
         init_host_coord = SkyCoord(ra=self.rao*u.deg, dec=self.deco*u.deg, distance=Distance(parallax=self.paro*u.mas), pm_ra_cosdec=self.pmrao*u.mas/u.yr, pm_dec=self.pmdeco*u.mas/u.yr, obstime=Time(self.gaia_epoch,format='jyear',scale='tcb'))
-        # propagate host position from Gaia epoch (2016.0 for DR3) to reference observation epoch 
+        # propagate host position from Gaia epoch (2016.0 for DR3) to reference observation epoch
         init_host_coord_at_obs = init_host_coord.apply_space_motion(Time(self.ref_epoch, format='jd'))
         # apply measurement of relative astrometry to get candidate in absolute coordinates at time of observation
         init_cand_coord_at_obs = init_host_coord_at_obs.spherical_offsets_by(self.ras[self.ref_epoch_idx] * u.mas, self.decs[self.ref_epoch_idx] * u.mas)
@@ -265,21 +265,21 @@ class System():
 
         def dummy_loglike(radec):
             """
-            Minimization function for distance to observed offset assuming stationary background scenario. 
+            Minimization function for distance to observed offset assuming stationary background scenario.
             Minimization of the distance provides RA and DEC at Epoch 2016.0 assuming stationary background star.
-            
+
             Returns:
                 Distance between observed offset at reference epoch versus predicted offset
             """
-            
+
             ra, dec = radec
             dummy_param = ra, dec, 0, 0, 0, self.rao, self.deco, self.pmrao, self.pmdeco, self.paro, self.radvelo
             xs, ys = self.radecdists([utc2tt(self.ref_epoch)], dummy_param)
 
             distance = np.linalg.norm(np.array([self.ras[self.ref_epoch_idx],self.decs[self.ref_epoch_idx]])-np.array([xs[0],ys[0]]))
-            
+
             return distance
-        
+
         # minimize distance between these points (bounds are 5e-5 degrees, i.e. 180 mas). The bounds might lead to an issue near the poles.
         bound = 5e-5
         init_result = minimize(dummy_loglike, np.array([ra0,dec0]), tol=1e-15, method='Nelder-Mead', bounds=((ra0-bound, ra0+bound), (dec0-bound, dec0+bound)))
@@ -291,12 +291,12 @@ class System():
         self.pmdec0 = self.pmdeco # mas/yr
         self.par0 = self.paro/10 # mas
         self.radvel0 = 0 # km/s
-        
+
 
     def query_astrometry(self, nearby_window: float = 0.5):
         """
         Queries Simbad for Gaia DR3 stars properties within a certain angular search box around the host star, as well as the properties of the host star itself.
-        
+
         Args:
             nearby_window (float): Dimensions of search box around host star to find background star population. Default 0.5 [degrees]
 
@@ -354,7 +354,7 @@ class System():
         """
         Gathers and sets attributes for the priors for background star proper motion (from neighbourhood statistics) and distance (from healpix).
         """
-        
+
         # some statistics
         self.mu_pmra = np.ma.median(self.nearby['pmra'].data)
         self.sigma_pmra = np.ma.std(self.nearby['pmra'].data)
@@ -379,17 +379,17 @@ class System():
     def radecdists(self, days, param): # for multiple epochs
         """
         Function that calculates the offset between companion and host star at a certain set of Epochs assuming background star tracks.
-        
-        Args: 
+
+        Args:
             days (np.array of float): Array of Julian days (Terrestrial Time) at which to calculate the offsets.
             param (np.array of float): Array of host star and background star parameters.
-            
-        Returns: 
+
+        Returns:
             tuple of arrays: RA and DEC offsets from host star position at Epochs.
         """
-        
+
         jd_start, jd_end, number = ephem_open() # can't we do this in the System class?
-        
+
         if len(param) == 4:
             ra, dec, pmra, pmdec = param
             par=0
@@ -397,10 +397,10 @@ class System():
         elif len(param) == 5:
             ra, dec, pmra, pmdec, par = param
             host_icrs=self.host_icrs
-        
+
         else:
             ra, dec, pmra, pmdec, par, ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host = param
-            
+
             host_gaia= novas.make_cat_entry(star_name="HST", catalog="HIP", star_num=1,
                                           ra=ra_host/15., dec=dec_host, pm_ra=pmra_host, pm_dec=pmdec_host,
                                           parallax=par_host, rad_vel=rv_host)
@@ -411,10 +411,10 @@ class System():
         star2_gaia = novas.make_cat_entry(star_name="BGR", catalog="HIP", star_num=2,
                                           ra=ra/15., dec=dec, pm_ra=pmra, pm_dec=pmdec,
                                           parallax=par, rad_vel=0)
-        
+
         star2_icrs = novas.transform_cat(option=1, incat=star2_gaia, date_incat=self.gaia_epoch,
                                          date_newcat=2000., newcat_id="HIP")
-            
+
         posx=[]
         posy=[]
         for i, day in enumerate(days):
@@ -445,7 +445,7 @@ class System():
     def loglike(self, param):
         """
         Function to calculate Log likelihood for correlated (e.g., GRAVITY) and uncorrelated datapoints given certain model parameters.
-        
+
         Args:
             param (np.array of float): set of parameters describing 5D position of background star and 6D position of host star.
 
@@ -496,11 +496,11 @@ class System():
 
         if len(param) == 11:
             ra, dec, pmra, pmdec, par, ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host = param
-            
+
             ra_host, dec_host, pmra_host, pmdec_host, par_host = self.HostStarPriors.transform_normal_multivariate(np.c_[ra_host,dec_host,pmra_host,pmdec_host,par_host])
             if self.rv_host_method == 'uniform':
                 rv_host = transform_uniform(rv_host, self.rv_lower, self.rv_upper)
-            else: # rv_host_method == 'normal' or 'gaia' 
+            else: # rv_host_method == 'normal' or 'gaia'
                 rv_host = transform_normal(rv_host, self.radvelo, self.sig_rv)
             # truncate distribution at 100 kpc (Nielsen+ 2017 do this at 10 kpc)
             par = 1000/transform_gengamm(par, self.L, self.alpha, self.beta) # [units of mas]
@@ -538,7 +538,7 @@ class System():
     def fit(self, dlogz=0.5, npool=4, dynamic=False, nlive=200, mpi_pool=False, resume=False, sample_method='unif'):
         """
         Function that fits the data using dynesty.
-        
+
         Args:
             dlogz (float): Dynesty cumulative log-evidence stop criterium. Default: 0.5
             npool (int): Number of CPU threads to assign to pool. Default: 4
@@ -547,7 +547,7 @@ class System():
             mpi_pool (bool): Sets option to use MPI multithreading. Default: False
             resume (bool): Sets option to resume from a previous result. Default: False
             sample_method: Default: 'unif'
-        
+
         Returns:
             results (object): samples of fit
         """
@@ -675,11 +675,11 @@ class System():
     def save_results(self, fileprefix='./'):
         """
         Function to save fitting results in a dict to a .pkl to allow resuming.
-        
+
         Args:
             fileprefix (str): Prefix to filename. Default "./" for current folder.
         """
-        
+
         save_dict = {'med': self.run_median, 'quant': self.run_quant, 'results': self.results}
         target_label = self.target_name.replace(' ','_')
         file_name = f'{fileprefix}{target_label}_dynestyrun_results.pkl'
@@ -689,7 +689,7 @@ class System():
     def load_results(self, fileprefix: str = './'):
         """
         Function to load fitting results in a dict from a .pkl to allow resuming.
-        
+
         Args:
             fileprefix (str): Prefix to filename. Default "./" for current folder.
         """
@@ -731,7 +731,7 @@ class System():
         Returns:
             tuple of figures: data and model tracks, posterior cornerplot, dynesty summary, parallax prior, gaia neighbourhood
         """
-        
+
         print('[BACKTRACK INFO]: Generating Plots')
         ref_epoch = Time(self.ref_epoch, format='jd')
 
@@ -753,7 +753,7 @@ class System():
         fig_hood = neighborhood(self, fileprefix=fileprefix, filepost=filepost)
         print('[BACKTRACK INFO]: Plots saved to {}'.format(fileprefix))
         return fig_track, fig_post, fig_diag, fig_prior, fig_hood
-    
+
     def generate_stationary_plot(
             self,
             days_backward: float = 3.*365.,
@@ -774,11 +774,11 @@ class System():
             plot_radec (bool): Option to plot RA vs time and DEC vs time in panels. Default: False for Sep vs time, PA vs time.
             fileprefix (str): Prefix to filename. Default "./" for current folder.
             filepost (str): Postfix to filename. Default ".pdf" for outputting pdf files.
-    
+
         Returns:
             fig_track (figure): Figure object corresponding to the saved plot.
         """
-        
+
         print('[BACKTRACK INFO]: Generating Stationary plot')
         ref_epoch = Time(self.ref_epoch, format='jd')
 
