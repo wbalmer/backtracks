@@ -349,7 +349,6 @@ def trackplot(
                               ecolor='tomato', linestyle="none",
                               marker='o', ms=5., mew=1.5, mec='tomato')
 
-    axs['A'].invert_xaxis()
     axs['A'].axis('equal')
     axs['A'].set_xlabel("Delta RA (mas)")
     axs['A'].set_ylabel("Delta DEC (mas)")
@@ -403,6 +402,7 @@ def neighborhood(backtracks, fileprefix='./', filepost='.pdf'):
     fig = corner.corner(nearby_array[~nan_idx, ],
                         truths=truths,
                         truth_color='cornflowerblue',
+                        labels=["pmra (mas/yr)", "pmdec (mas/yr)", "parallax (mas)"],
                         smooth=1,
                         smooth_1d=1,
                         quantiles=[0.003, 0.997],
@@ -451,7 +451,7 @@ def stationtrackplot(
     # Epochs for the background tracks
 
     plot_epochs = ref_epoch + np.arange(-days_backward, days_forward, step_size)
-    plot_epochs_tt=utc2tt(plot_epochs)
+    plot_epochs_tt = utc2tt(plot_epochs)
     # Create astropy times for observations and background model
 
     plot_times = Time(plot_epochs, format='jd')
@@ -559,7 +559,6 @@ def stationtrackplot(
                               ecolor='tomato', linestyle="none",
                               marker='o', ms=5., mew=1.5, mec='tomato')
 
-    axs['A'].invert_xaxis()
     axs['A'].axis('equal')
     axs['A'].set_xlabel("Delta RA (mas)")
     axs['A'].set_ylabel("Delta DEC (mas)")
