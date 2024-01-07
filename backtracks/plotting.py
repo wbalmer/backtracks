@@ -349,6 +349,7 @@ def trackplot(
                               ecolor='tomato', linestyle="none",
                               marker='o', ms=5., mew=1.5, mec='tomato')
 
+    axs['A'].invert_xaxis()
     axs['A'].axis('equal')
     axs['A'].set_xlabel("Delta RA (mas)")
     axs['A'].set_ylabel("Delta DEC (mas)")
@@ -559,6 +560,7 @@ def stationtrackplot(
                               ecolor='tomato', linestyle="none",
                               marker='o', ms=5., mew=1.5, mec='tomato')
 
+    axs['A'].invert_xaxis()
     axs['A'].axis('equal')
     axs['A'].set_xlabel("Delta RA (mas)")
     axs['A'].set_ylabel("Delta DEC (mas)")
