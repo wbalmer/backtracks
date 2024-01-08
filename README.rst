@@ -1,9 +1,13 @@
+.. raw:: html
+   
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="https://github.com/wbalmer/backtracks/raw/main/docs/_static/backtracks-logo-dark.svg">
+     <source media="(prefers-color-scheme: light)" srcset="https://github.com/wbalmer/backtracks/raw/main/docs/_static/backtracks-logo-light.svg">
+     <img alt="Shows an illustrated helix trailinb behind a planet with a question mark, lines are black in light mode and white in dark mode." src="https://github.com/wbalmer/backtracks/raw/main/docs/_static/backtracks-logo-light.svg">
+   </picture>
+
 backtracks
 ==========
-
-.. image:: docs/_static/backtracks-logo-dark.svg
-   :align: center
-
 
 
 .. image:: https://img.shields.io/pypi/v/backtracks
