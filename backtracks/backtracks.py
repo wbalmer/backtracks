@@ -1,9 +1,6 @@
 # backtracks.py
 # authors: Gilles Otten, William Balmer, Tomas Stolker
 
-# special packages needed: astropy, matplotlib, numpy, novas, novas_de405,
-# dynesty, emcee, corner (potentially cython and tqdm if clean pip install crashes)
-
 # this code does an analysis with a background star model given delta RA and
 # delta DEC datapoints of a point source wrt a host star
 # comparing Bayes factor or BIC of this analysis and a pure Orbitize! run would
@@ -34,7 +31,7 @@ from novas.compat.eph_manager import ephem_open
 
 from schwimmbad import MPIPool
 
-from backtracks.utils import pol2car, transform_gengamm, transform_normal, transform_uniform, utc2tt, HostStarPriors
+from backtracks.utils import pol2car, transform_gengamm, transform_normal, transform_uniform, utc2tt, HostStarPriors, radecdists
 from backtracks.plotting import diagnostic, neighborhood, plx_prior, posterior, trackplot, stationtrackplot
 
 
@@ -274,7 +271,7 @@ class System():
 
             ra, dec = radec
             dummy_param = ra, dec, 0, 0, 0, self.rao, self.deco, self.pmrao, self.pmdeco, self.paro, self.radvelo
-            xs, ys = self.radecdists([utc2tt(self.ref_epoch)], dummy_param)
+            xs, ys = radecdists(self, [utc2tt(self.ref_epoch)], dummy_param)
 
             distance = np.linalg.norm(np.array([self.ras[self.ref_epoch_idx],self.decs[self.ref_epoch_idx]])-np.array([xs[0],ys[0]]))
 
@@ -376,60 +373,6 @@ class System():
 
         print(f'[BACKTRACK INFO]: Queried distance prior parameters, L={self.L:.2f}, alpha={self.alpha:.2f}, beta={self.beta:.2f}')
 
-    def radecdists(self, days, param): # for multiple epochs
-        """
-        Function that calculates the offset between companion and host star at a certain set of Epochs assuming background star tracks.
-
-        Args:
-            days (np.array of float): Array of Julian days (Terrestrial Time) at which to calculate the offsets.
-            param (np.array of float): Array of host star and background star parameters.
-
-        Returns:
-            tuple of arrays: RA and DEC offsets from host star position at Epochs.
-        """
-
-        jd_start, jd_end, number = ephem_open() # can't we do this in the System class?
-
-        if len(param) == 4:
-            ra, dec, pmra, pmdec = param
-            par=0
-            host_icrs=self.host_icrs
-        elif len(param) == 5:
-            ra, dec, pmra, pmdec, par = param
-            host_icrs=self.host_icrs
-
-        else:
-            ra, dec, pmra, pmdec, par, ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host = param
-
-            host_gaia= novas.make_cat_entry(star_name="HST", catalog="HIP", star_num=1,
-                                          ra=ra_host/15., dec=dec_host, pm_ra=pmra_host, pm_dec=pmdec_host,
-                                          parallax=par_host, rad_vel=rv_host)
-
-            host_icrs = novas.transform_cat(option=1, incat=host_gaia, date_incat=self.gaia_epoch,
-                                         date_newcat=2000., newcat_id="HIP")
-
-        star2_gaia = novas.make_cat_entry(star_name="BGR", catalog="HIP", star_num=2,
-                                          ra=ra/15., dec=dec, pm_ra=pmra, pm_dec=pmdec,
-                                          parallax=par, rad_vel=0)
-
-        star2_icrs = novas.transform_cat(option=1, incat=star2_gaia, date_incat=self.gaia_epoch,
-                                         date_newcat=2000., newcat_id="HIP")
-
-        posx=[]
-        posy=[]
-        for i, day in enumerate(days):
-            raa,deca = novas.app_star(day,host_icrs)
-            rab,decb = novas.app_star(day,star2_icrs)
-            c_a=SkyCoord(raa,deca,unit=("hourangle","deg"))
-            c_b=SkyCoord(rab,decb,unit=("hourangle","deg"))
-            offset=c_a.spherical_offsets_to(c_b)
-            position_x=offset[0].mas
-            position_y=offset[1].mas
-            posx.append(position_x)
-            posy.append(position_y)
-
-        return np.array(posx),np.array(posy)
-
     def fmodel(self, param):
         """
         Function that models the offset of the background star with respect to the host star at the observed epochs.
@@ -440,7 +383,7 @@ class System():
         Returns:
             RA and DEC offsets at given observed epochs.
         """
-        return self.radecdists(self.epochs_tt, param)
+        return radecdists(self, self.epochs_tt, param)
 
     def loglike(self, param):
         """

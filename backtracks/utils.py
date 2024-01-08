@@ -4,6 +4,78 @@ import numpy as np
 from scipy.stats import norm
 from scipy.special import gammainc, gammaincc, gammainccinv, gammaincinv
 from astropy.time import Time
+import novas.compat as novas
+from novas.compat.eph_manager import ephem_open
+from astropy.coordinates import SkyCoord
+
+def radecdists(backtracks, days, param): # for multiple epochs
+        """
+        Function that calculates the offset between companion and host star at a certain set of Epochs assuming background star tracks.
+
+        Args:
+            backtracks (class): backtracks.System class which carries the needed methods and attributes. 
+            days (np.array of float): Array of Julian days (Terrestrial Time) at which to calculate the offsets.
+            param (np.array of float): Array of host star and background star parameters.
+
+        Returns:
+            tuple of arrays: RA and DEC offsets from host star position at Epochs.
+            
+        References:
+            * Bangert, J., Puatua, W., Kaplan, G., Bartlett, J., Harris, W., Fredericks, A., & Monet, A. (2011) User's Guide to NOVAS Version C3.1 (Washington, DC: USNO).
+            * Barron, E. G., Kaplan, G. H., Bangert, J., Bartlett, J. L., Puatua, W., Harris, W., & Barrett, P. (2011) Bull. AAS, 43, 2011.
+            * `NOVAS website <https://aa.usno.navy.mil/software/novas_info>`__
+            
+        Notes:
+            * The NOVAS function `app_star` does the heavy lifting here and assumes a geocentric observer location. \
+            It takes into account gravitational lensing by solar system bodies, stellar aberration, 3D motion and parallax.
+            * For Proxima Centauri you may expect a 33 uas offset throughout a day due to an additional small parallax component \
+            (up to 1 Earth radius offset of the observer w.r.t. geocenter). `topo_star` (not implemented in backtracks) would have to be used to account for this effect.
+            * The default ephemeris file in `backtracks` is DE405 (valid from 1599 DEC 09 to 2201 FEB 20). To extend time coverage use DE430/DE440.
+            * Additional JPL Ephemeris files are found `here <https://ssd.jpl.nasa.gov/planets/eph_export.html>`__ \
+            and `here <https://ssd.jpl.nasa.gov/ftp/eph/planets/>`__
+        """
+
+        jd_start, jd_end, number = ephem_open() # can't we do this in the System class?
+
+        if len(param) == 4:
+            ra, dec, pmra, pmdec = param
+            par=0
+            host_icrs=backtracks.host_icrs
+        elif len(param) == 5:
+            ra, dec, pmra, pmdec, par = param
+            host_icrs=backtracks.host_icrs
+
+        else:
+            ra, dec, pmra, pmdec, par, ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host = param
+
+            host_gaia= novas.make_cat_entry(star_name="HST", catalog="HIP", star_num=1,
+                                          ra=ra_host/15., dec=dec_host, pm_ra=pmra_host, pm_dec=pmdec_host,
+                                          parallax=par_host, rad_vel=rv_host)
+
+            host_icrs = novas.transform_cat(option=1, incat=host_gaia, date_incat=backtracks.gaia_epoch,
+                                         date_newcat=2000., newcat_id="HIP")
+
+        star2_gaia = novas.make_cat_entry(star_name="BGR", catalog="HIP", star_num=2,
+                                          ra=ra/15., dec=dec, pm_ra=pmra, pm_dec=pmdec,
+                                          parallax=par, rad_vel=0)
+
+        star2_icrs = novas.transform_cat(option=1, incat=star2_gaia, date_incat=backtracks.gaia_epoch,
+                                         date_newcat=2000., newcat_id="HIP")
+
+        posx=[]
+        posy=[]
+        for i, day in enumerate(days):
+            raa,deca = novas.app_star(day,host_icrs)
+            rab,decb = novas.app_star(day,star2_icrs)
+            c_a=SkyCoord(raa,deca,unit=("hourangle","deg"))
+            c_b=SkyCoord(rab,decb,unit=("hourangle","deg"))
+            offset=c_a.spherical_offsets_to(c_b)
+            position_x=offset[0].mas
+            position_y=offset[1].mas
+            posx.append(position_x)
+            posy.append(position_y)
+
+        return np.array(posx),np.array(posy)
 
 def pol2car(sep, pa, seperr, paerr, corr=np.nan):
     """
