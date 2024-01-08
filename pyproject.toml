@@ -5,14 +5,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "backtracks"
-version = "0.4.0"
+version = "0.4.2"
 authors = [
   { name="William Balmer", email="wbalmer1@jhu.com" },
   { name="Gilles Otten", email="gpplotten@asiaa.sinica.edu.tw" },
   { name="Tomas Stolker", email="stolker@strw.leidenuniv.nl" },
 ]
 description = "Python package to fit relative astrometry with background star motion tracks."
-readme = "README.rst"
+readme = "PYPI_SAFE_README.rst"
 requires-python = ">=3.9,<3.12"
 dynamic = ["dependencies"]
 classifiers = [
