@@ -10,7 +10,7 @@ from astropy.time import Time
 from dynesty import plotting as dyplot
 from matplotlib.ticker import FuncFormatter
 
-from backtracks.utils import transform_gengamm, radec2seppa, seppa2radec, transform_errors, utc2tt
+from backtracks.utils import transform_gengamm, radec2seppa, seppa2radec, transform_errors, utc2tt, radecdists
 
 plt.style.use('default')
 plt.rcParams['figure.figsize'] = [9., 6.]
@@ -200,7 +200,7 @@ def trackplot(
     if plot_stationary:
         stat_pars = backtracks.stationary_params
 
-        ra_stat, dec_stat = backtracks.radecdists(plot_epochs_tt, stat_pars)
+        ra_stat, dec_stat = radecdists(backtracks, plot_epochs_tt, stat_pars)
         axs['A'].plot(ra_stat, dec_stat, color="lightgray", ls='--',
                       label="Stationary track, $\chi^2_r={}$".format(round(backtracks.stationary_chi2_red,2)))
 
@@ -223,7 +223,7 @@ def trackplot(
     dec_samples = np.zeros((n_samples, plot_epochs.size))
 
     for i, idx_item in enumerate(random_idx):
-        ra_samples[i, ], dec_samples[i, ] = backtracks.radecdists(plot_epochs_tt, post_samples[idx_item, ])
+        ra_samples[i, ], dec_samples[i, ] = radecdists(backtracks, plot_epochs_tt, post_samples[idx_item, ])
         axs['A'].plot(ra_samples[i, ], dec_samples[i, ], color='cornflowerblue', lw=0.3, alpha=0.3)
 
     # Create 1 sigma and 3 sigma percentiles for envelopes
@@ -254,7 +254,7 @@ def trackplot(
 
     # Plot background track with best-fit parameters
 
-    ra_bg, dec_bg = backtracks.radecdists(plot_epochs_tt, backtracks.run_median)
+    ra_bg, dec_bg = radecdists(backtracks, plot_epochs_tt, backtracks.run_median)
 
     axs['A'].plot(ra_bg, dec_bg, color="black", label="Median track, $\chi^2_r={}$".format(round(backtracks.median_chi2_red,2)))
 
@@ -269,7 +269,7 @@ def trackplot(
 
     # Connect data points with best-fit model epochs
 
-    ra_bg_best, dec_bg_best = backtracks.radecdists(backtracks.epochs_tt, backtracks.run_median)
+    ra_bg_best, dec_bg_best = radecdists(backtracks, backtracks.epochs_tt, backtracks.run_median)
 
     for i in range(len(backtracks.ras)):
         comp_ra = (backtracks.ras[i], ra_bg_best[i])
@@ -466,7 +466,7 @@ def stationtrackplot(
 
     stat_pars = backtracks.stationary_params
 
-    ra_stat, dec_stat = backtracks.radecdists(plot_epochs_tt, stat_pars)
+    ra_stat, dec_stat = radecdists(backtracks, plot_epochs_tt, stat_pars)
     axs['A'].plot(ra_stat, dec_stat, color="lightgray", ls='--',
                     label="Stationary track, $\chi^2_r={}$".format(round(backtracks.stationary_chi2_red,2)))
 
@@ -480,7 +480,7 @@ def stationtrackplot(
 
     # Connect data points with best-fit model epochs
 
-    ra_bg_best, dec_bg_best = backtracks.radecdists(backtracks.epochs_tt, stat_pars)
+    ra_bg_best, dec_bg_best = radecdists(backtracks, backtracks.epochs_tt, stat_pars)
 
     for i in range(len(backtracks.ras)):
         comp_ra = (backtracks.ras[i], ra_bg_best[i])
