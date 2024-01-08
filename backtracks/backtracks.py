@@ -1,9 +1,6 @@
 # backtracks.py
 # authors: Gilles Otten, William Balmer, Tomas Stolker
 
-# special packages needed: astropy, matplotlib, numpy, novas, novas_de405,
-# dynesty, emcee, corner (potentially cython and tqdm if clean pip install crashes)
-
 # this code does an analysis with a background star model given delta RA and
 # delta DEC datapoints of a point source wrt a host star
 # comparing Bayes factor or BIC of this analysis and a pure Orbitize! run would
@@ -386,6 +383,20 @@ class System():
 
         Returns:
             tuple of arrays: RA and DEC offsets from host star position at Epochs.
+            
+        References:
+            * Bangert, J., Puatua, W., Kaplan, G., Bartlett, J., Harris, W., Fredericks, A., & Monet, A. (2011) User's Guide to NOVAS Version C3.1 (Washington, DC: USNO).
+            * Barron, E. G., Kaplan, G. H., Bangert, J., Bartlett, J. L., Puatua, W., Harris, W., & Barrett, P. (2011) Bull. AAS, 43, 2011.
+            * `NOVAS website <https://aa.usno.navy.mil/software/novas_info>`__
+            
+        Notes:
+            * The NOVAS function `app_star` does the heavy lifting here and assumes a geocentric observer location. \
+            It takes into account gravitational lensing by solar system bodies, stellar aberration, 3D motion and parallax.
+            * For Proxima Centauri you may expect a 33 uas offset throughout a day due to an additional small parallax component \
+            (up to 1 Earth radius offset of the observer w.r.t. geocenter). `topo_star` (not implemented in backtracks) would have to be used to account for this effect.
+            * The default ephemeris file in `backtracks` is DE405 (valid from 1599 DEC 09 to 2201 FEB 20). To extend time coverage use DE430/DE440.
+            * Additional JPL Ephemeris files are found `here <https://ssd.jpl.nasa.gov/planets/eph_export.html>`__ \
+            and `here <https://ssd.jpl.nasa.gov/ftp/eph/planets/>`__
         """
 
         jd_start, jd_end, number = ephem_open() # can't we do this in the System class?
