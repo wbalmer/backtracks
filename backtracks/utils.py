@@ -235,7 +235,7 @@ def transform_gengamm(x, L=1.35e3, alpha=1, beta=2):
 
     Notes:
         * The exponentially decreasing space density (EDSD) of Bailer-Jones et al 2018 (DR2) is equivalent to the GGD with alpha=1 and beta=2.
-        * Parameters L, alpha and beta are equivalent to parameters a, p and d-1 from the original paper by Stacy (1962). 
+        * Parameters `L`, `alpha` and `beta` are equivalent to parameters `a`, `p` and `d-1` from the original paper by Stacy (1962). 
     """
 
     return L*(gammaincinv((beta+1)/alpha,x)**(1/alpha))
@@ -258,8 +258,8 @@ class HostStarPriors():
     Class to draw values from multivariate normal distribution using pseudoinverse.
 
     Args:
-        mean (np.array of float): M array of mean values of multivariate normal
-        cov (np.array of float): M by M array of covariance matrix of multivariate normal
+        mean (np.array of float): `M` array of mean values of multivariate normal
+        cov (np.array of float): `M` by `M` array of covariance matrix of multivariate normal
 
     Notes:
         * This class is a stripped down version of MultivariateGaussianLogPrior in `pints <https://github.com/pints-team/pints/blob/main/pints/_log_priors.py>`__ (BSD3-clause)
@@ -299,10 +299,10 @@ class HostStarPriors():
         This function returns values drawn from the multivariate normal when given numbers between 0 and 1.
         
         Args:
-            x (np.array of float): N by M array of values between 0 and 1 used to draw values from the distribution
+            x (np.array of float): `N` by `M` array of values between 0 and 1 used to draw values from the distribution
 
         Returns:
-            tuple: (M np.arrays of length N)
+            tuple: (`M` np.arrays of length `N`)
         """
 
         n_samples = x.shape[0]

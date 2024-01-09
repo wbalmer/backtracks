@@ -44,23 +44,19 @@ class System():
     """
     Class for describing a star system with a companion candidate.
 
+    Args:
+        target_name (str): Target name which will be resolved by SIMBAD into Gaia DR3 ID
+        candidate_file (str): .csv file containing the candidate companion coordinates in Orbitize! format
+        nearby_window (float): Default 0.5 [degrees]
+        fileprefix (str): Prefix to filename. Default "./" for current folder.
+        ndim (int): Number of dimensions that need to be fit. Default: 11
+        **rv_host_method (str): {'normal','uniform'} Uses Gaia DR3 retrieved RV and normal distribution as Host star RV prior as default if not defined.
+        **rv_host_params (tuple of floats): (lower_limit,upper_limit) for uniform rv_host_method, (mu,sigma) for normal rv_host_method. [km/s]
+        **unif (float): Sets bounds for uniform prior around estimated candidate companion location. Defaults to 5e-3 if not defined. [degrees]
+        **ref_epoch_idx (int): ID of datapoint at which to pin stationary tracks. Defaults to 0 if not defined. Follows order of candidate_file datapoints.
     """
 
     def __init__(self, target_name: str, candidate_file: str, nearby_window: float = 0.5, fileprefix = './', ndim = 11, **kwargs):
-        """
-        Args:
-            target_name (str): Target name which will be resolved by SIMBAD into Gaia DR3 ID
-            candidate_file (str): .csv file containing the to be test companion coordinates in Orbitize! format
-            nearby_window (float): Default 0.5 [degrees]
-            fileprefix (str): Prefix to filename. Default "./" for current folder.
-            ndim (int): Number of dimensions that need to be fit. Default: 11
-            **kwargs: additional keyword arguments
-            rv_host_method (str): {'normal','uniform'} Uses Gaia DR3 retrieved RV and normal distribution as Host star RV prior if not defined.
-            rv_host_params (tuple of floats): (lower_limit,upper_limit) for uniform rv_host_method, (mu,sigma) for normal rv_host_method. [km/s]
-            unif (float): Sets bounds for uniform prior around estimated companion location. Defaults to 5e-3 if not defined. [degrees]
-            ref_epoch_idx (int): ID of datapoint at which to pin stationary tracks. Defaults to 0 if not defined. Follows order of candidate_file datapoints.
-        """
-
         self.target_name = target_name
         self.candidate_file = candidate_file
         self.fileprefix = fileprefix
@@ -264,7 +260,10 @@ class System():
             """
             Minimization function for distance to observed offset assuming stationary background scenario.
             Minimization of the distance provides RA and DEC at Epoch 2016.0 assuming stationary background star.
-
+            
+            Args:
+                radec (tuple of floats): RA, DEC [degrees] for the candidate companion.
+            
             Returns:
                 Distance between observed offset at reference epoch versus predicted offset
             """
@@ -489,7 +488,7 @@ class System():
             nlive (int): Constant number of live points to set in non-dynamic case. Default: 200
             mpi_pool (bool): Sets option to use MPI multithreading. Default: False
             resume (bool): Sets option to resume from a previous result. Default: False
-            sample_method: Default: 'unif'
+            sample_method: Default: 'unif' for uniform sampling within bounds. See `Dynesty` documentation for more sampling options.
 
         Returns:
             results (object): samples of fit
