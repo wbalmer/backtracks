@@ -186,11 +186,14 @@ class System():
             try:
                 self.rv_host_method='gaia'
                 self.radvelo = target_gaia['radial_velocity'][0] # km/s
+                print(type(self.radvelo))
+                print(type(target_gaia['radial_velocity'][0]))
+                print(isinstance(self.radvelo, (int, float)))
                 self.sig_rv = target_gaia['radial_velocity_error'][0]
-                if isinstance(self.radvelo, (int, float)) and not isinstance(self.radvelo, bool) == False:
-                    raise Exception("No valid Gaia RV, please change rv_host_method to 'normal' or 'uniform' and set rv_host_params to override")
-            except:
-                raise Exception("No valid Gaia RV, please change rv_host_method to 'normal' or 'uniform' and set rv_host_params to override.")
+                if isinstance(self.radvelo, np.ma.core.MaskedConstant):
+                    raise Exception(f"Gaia query of {self.target_name}, e.g. Gaia {self.gaia_release} {self.gaia_id}, returned -- for \'radial_velocity\', indicating that the RV for this object has not been measured by Gaia.")
+            except Exception:
+                raise Exception("No valid Gaia RV, please change rv_host_method to 'normal' or 'uniform' when initializing backtracks.System and set rv_host_params manually to override.")
 
         self.host_mean = np.r_[self.rao,self.deco,self.pmrao,self.pmdeco,self.paro]
         self.host_cov = np.array([[sig_ra**2,ra_dec_corr*sig_ra*sig_dec,ra_pmra_corr*sig_ra*sig_pmra,sig_ra*sig_pmdec*ra_pmdec_corr,sig_ra*sig_parallax*ra_parallax_corr],
@@ -334,7 +337,10 @@ class System():
         print(f'   * PM RA = {target_gaia["pmra"][0]:.2f} mas/yr')
         print(f'   * PM Dec = {target_gaia["pmdec"][0]:.2f} mas/yr')
         print(f'   * Parallax = {target_gaia["parallax"][0]:.2f} mas')
-        print(f'   * RV = {target_gaia["radial_velocity"][0]:.2f} km/s')
+        if isinstance(target_gaia["radial_velocity"][0], np.ma.core.MaskedConstant):
+            print(f'   * RV = --') # this addresses the FutureWarning: Format strings passed to MaskedConstant are ignored, but in future may error or produce different behavior
+        else:
+            print(f'   * RV = {target_gaia["radial_velocity"][0]:.2f} km/s')
 
         # resolve nearby stars
         width = u.Quantity(nearby_window, u.deg)
