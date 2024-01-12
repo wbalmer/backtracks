@@ -186,9 +186,6 @@ class System():
             try:
                 self.rv_host_method='gaia'
                 self.radvelo = target_gaia['radial_velocity'][0] # km/s
-                print(type(self.radvelo))
-                print(type(target_gaia['radial_velocity'][0]))
-                print(isinstance(self.radvelo, (int, float)))
                 self.sig_rv = target_gaia['radial_velocity_error'][0]
                 if isinstance(self.radvelo, np.ma.core.MaskedConstant):
                     raise Exception(f"Gaia query of {self.target_name}, e.g. Gaia {self.gaia_release} {self.gaia_id}, returned -- for \'radial_velocity\', indicating that the RV for this object has not been measured by Gaia.")
