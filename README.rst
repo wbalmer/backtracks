@@ -22,6 +22,9 @@ backtracks
 .. image:: https://img.shields.io/github/license/wbalmer/backtracks
    :target: https://github.com/wbalmer/backtracks/blob/main/LICENSE
 
+.. image:: https://www.codefactor.io/repository/github/wbalmer/backtracks/badge
+   :target: https://www.codefactor.io/repository/github/wbalmer/backtracks
+   :alt: CodeFactor
 
 
 `backtracks` is a python package to fit relative astrometry with background helical motion tracks, to discern directly imaged planets :ringed_planet: from contaminant sources :dizzy: :star:
