@@ -112,7 +112,6 @@ def posterior(backtracks, fileprefix='./', filepost='.pdf'):
         labels.append("parallax (mas)")
     levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2) # 1,2,3 sigma levels for a 2d gaussian
     # plot extended run (right)
-    samples = backtracks.results.samples_equal()
     fig, ax = dyplot.cornerplot(backtracks.results,
                                color='cornflowerblue',
                                dims=range(backtracks.ndim),
