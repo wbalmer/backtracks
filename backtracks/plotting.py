@@ -107,14 +107,12 @@ def posterior(backtracks, fileprefix='./', filepost='.pdf'):
         * Only the five parameters of the background star are plotted.
     """
 
-    labels = ["RA (deg, ep=2016)", "DEC (deg, ep=2016)", "pmra (mas/yr)", "pmdec (mas/yr)"]
-    if backtracks.ndim == 5:
-        labels.append("parallax (mas)")
+    labels = ["RA (deg, ep=2016)", "DEC (deg, ep=2016)", "pmra (mas/yr)", "pmdec (mas/yr)", "parallax (mas)"]
     levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2) # 1,2,3 sigma levels for a 2d gaussian
     # plot extended run (right)
     fig, ax = dyplot.cornerplot(backtracks.results,
                                color='cornflowerblue',
-                               dims=range(backtracks.ndim),
+                               dims=range(5),
                                # truths=np.zeros(ndim),
                                # span=[(-4.5, 4.5) for i in range(ndim)],
                                labels=labels,
@@ -140,9 +138,8 @@ def posterior(backtracks, fileprefix='./', filepost='.pdf'):
             axis.set(xlabel=None, ylabel=None)
     for axis_col in ax[:,-1]:
         axis_col.xaxis.set_major_formatter(tick_formatter)
-    if backtracks.ndim == 5:
-        ax[-1,-1].set_xscale('log')
-        # ax[-1,-1].set_xlim(xmin=1e-2)
+    ax[-1,-1].set_xscale('log')
+    # ax[-1,-1].set_xlim(xmin=1e-2)
 
     target_name = backtracks.target_name.replace(' ', '_')
     plt.savefig(f"{fileprefix}{target_name}_corner_backtracks"+filepost, dpi=300, bbox_inches='tight')
@@ -395,11 +392,7 @@ def neighborhood(backtracks, fileprefix='./', filepost='.pdf'):
     nearby_table['pmdec'] = backtracks.nearby['pmdec'].data
     nearby_table['parallax'] = backtracks.nearby['parallax'].data
 
-    try:
-        truths = backtracks.run_median[2:5]
-    except:
-        truths = backtracks.run_median[2:4]
-        truths = np.append(truths, 0.)
+    truths = backtracks.run_median[2:5]
 
     # 1,2,3 sigma levels for a 2d gaussian
     levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2)
