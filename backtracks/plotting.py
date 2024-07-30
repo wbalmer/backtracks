@@ -395,11 +395,11 @@ def neighborhood(backtracks, fileprefix='./', filepost='.pdf'):
     nearby_table['pmdec'] = backtracks.nearby['pmdec'].data
     nearby_table['parallax'] = backtracks.nearby['parallax'].data
 
-    if backtracks.ndim == 4:
+    try:
+        truths = backtracks.run_median[2:5]
+    except:
         truths = backtracks.run_median[2:4]
         truths = np.append(truths, 0.)
-    else:
-        truths = backtracks.run_median[2:5]
 
     # 1,2,3 sigma levels for a 2d gaussian
     levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2)
