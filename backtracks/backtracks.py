@@ -130,11 +130,13 @@ class System():
             self.ref_epoch = self.epochs[self.ref_epoch_idx]
 
         if 'query_file' in kwargs and kwargs['query_file'] is not None:
-            self.gaia_id = int(Path(kwargs['query_file']).stem.split('_')[-1])
 
             with fits.open(kwargs['query_file']) as hdu_list:
                 target_gaia = Table(hdu_list[1].data, masked=True)
                 self.nearby = Table(hdu_list[2].data, masked=True)
+
+                self.gaia_id = target_gaia['SOURCE_ID'][0]
+                self.gaia_epoch = target_gaia['ref_epoch'][0]
 
                 for col in target_gaia.columns.values():
                     col.mask = np.isnan(col)
@@ -322,9 +324,12 @@ class System():
                          unit=(u.hourangle, u.degree), frame='icrs')
         width = u.Quantity(50, u.arcsec)
         height = u.Quantity(50, u.arcsec)
-        columns = ['source_id', 'ra', 'dec', 'pmra', 'pmdec', 'parallax', 'radial_velocity', 'ref_epoch','ra_error','dec_error','parallax_error','pmra_error','pmdec_error','radial_velocity_error','ra_dec_corr','ra_parallax_corr','ra_pmra_corr','ra_pmdec_corr','dec_parallax_corr','dec_pmra_corr','dec_pmdec_corr','parallax_pmra_corr','parallax_pmdec_corr','pmra_pmdec_corr']
+        columns = ['source_id', 'SOURCE_ID', 'ra', 'dec', 'pmra', 'pmdec', 'parallax', 'radial_velocity', 'ref_epoch','ra_error','dec_error','parallax_error','pmra_error','pmdec_error','radial_velocity_error','ra_dec_corr','ra_parallax_corr','ra_pmra_corr','ra_pmdec_corr','dec_parallax_corr','dec_pmra_corr','dec_pmdec_corr','parallax_pmra_corr','parallax_pmdec_corr','pmra_pmdec_corr']
         target_gaia = Gaia.query_object_async(coordinate=coord, width=width, height=height, columns=columns)
-        target_gaia = target_gaia[target_gaia['source_id']==gaia_id]
+        if 'source_id' in target_gaia.columns:
+            target_gaia = target_gaia[target_gaia['source_id']==gaia_id]
+        else:
+            target_gaia = target_gaia[target_gaia['SOURCE_ID']==gaia_id]
         self.gaia_epoch = target_gaia['ref_epoch'][0]
         print(f'[BACKTRACK INFO]: gathered Gaia {self.gaia_release} data for {self.target_name}')
         print(f'   * Gaia source ID = {gaia_id}')
