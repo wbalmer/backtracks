@@ -17,9 +17,14 @@ About
 
 
 
-Written by Gilles Otten (@gotten), William Balmer (@wbalmer), and Tomas Stolker (@tomasstolker).
+`backtracks` is a python package to fit relative astrometry with background helical motion tracks, to discern directly imaged planets :ringed_planet: from contaminant sources :dizzy: :star:
 
-No one wants to kill their planet candidates, but sometimes pesky background stars can slip past our best efforts at vetting and validation. When you need to be sure of your planet discovery, or if you need to, *ahem* backtrack and revise the analysis of a known "planet", *backtracks* can help.
+The code is written and developed by Gilles Otten (@gotten), William Balmer (@wbalmer), and Tomas Stolker (@tomasstolker).
+
+Attribution
+-----------
+
+If you use `backtracks` in your published work, please cite our Astrophysics Source Code Library entry, https://ascl.net/code/v/3755, and/or provide a footnote/acknowledgement linking to our package. Thank you!
 
 Details
 -------
