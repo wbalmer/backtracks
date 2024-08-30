@@ -10,5 +10,6 @@ Documentation for *backtracks*
 
    installation
    tutorial.ipynb
+   additional-examples.ipynb
    modules
    about

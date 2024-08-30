@@ -1,0 +1,4 @@
+epoch,object,quant1,quant1_err,quant2,quant2_err,quant12_corr,quant_type,instrument
+57703,1,145,19,108.3,6.1,nan,seppa,NIRC2
+57768,1,179,11,103.8,4.4,nan,seppa,NIRC2
+58063,1,160,18,91.3,3.9,nan,seppa,NIRC2
