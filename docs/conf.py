@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('../'))
 # -- Project information -----------------------------------------------------
 
 project = 'backtracks'
-copyright = '2024, William Balmer'
+copyright = '2025, William Balmer'
 author = 'William Balmer'
 
 # -- General configuration ---------------------------------------------------

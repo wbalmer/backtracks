@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "backtracks"
-version = "0.5.0"
+version = "0.5.0.post1"
 authors = [
   { name="William Balmer", email="wbalmer1@jhu.com" },
   { name="Gilles Otten", email="gpplotten@asiaa.sinica.edu.tw" },
