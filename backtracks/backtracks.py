@@ -50,6 +50,8 @@ class System():
         nearby_window (float): Default 0.5 [degrees]
         fileprefix (str): Prefix to filename. Default "./" for current folder.
         ndim (int): Number of dimensions that need to be fit. Default: 11
+        **relax_pm_priors (bool): Instead of using normal distribution based on nearby Gaia data, set a wide uniform prior on pm_ra and pm_dec based on the Gaia data over the interval (-10sigma, +10 sigma) mas/yr.
+        **relax_par_priors (bool): Instead of using the Bailer-Jones inverse gamma prior on parallax based on Gaia data, set a wide uniform prior on parallax over the interval (1e-2, host_star_plx) mas.
         **rv_host_method (str): {'normal','uniform'} Uses Gaia DR3 retrieved RV and normal distribution as Host star RV prior as default if not defined.
         **rv_host_params (tuple of floats): (lower_limit,upper_limit) for uniform rv_host_method, (mu,sigma) for normal rv_host_method. [km/s]
         **unif (float): Sets bounds for uniform prior around estimated candidate companion location. Defaults to 5e-3 if not defined. [degrees]
@@ -66,6 +68,14 @@ class System():
             self.unif = kwargs['unif']
         else:
             self.unif = 5e-3
+        if 'relax_pm_priors' in kwargs:
+            self.relax_pm_priors = kwargs['relax_pm_priors']
+        else:
+            self.relax_pm_priors = False
+        if 'relax_par_priors' in kwargs:
+            self.relax_par_priors = kwargs['relax_par_priors']
+        else: 
+            self.relax_par_priors = False
         if 'rv_host_method' in kwargs:
              if 'rv_host_params' not in kwargs:
                  raise Exception("'rv_host_method' is set. Please provide (mu,sigma) or (lower,upper) in km/s in 'rv_host_params'")
@@ -475,6 +485,11 @@ class System():
         # normal priors for proper motion
         pmra = transform_normal(pmra, self.mu_pmra, self.sigma_pmra)
         pmdec = transform_normal(pmdec, self.mu_pmdec, self.sigma_pmdec)
+        if self.relax_pm_priors:
+            pmra = transform_uniform(pmra, self.mu_pmra-(10*self.sigma_pmra), self.mu_pmra+(10*self.sigma_pmra))
+            pmdec = transform_uniform(pmdec, self.mu_pmdec-(10*self.sigma_pmdec), self.mu_pmdec+(10*self.sigma_pmdec))
+        if self.relax_par_priors:
+            par = transform_uniform(param[4], 1e-2, self.mu_par)
 
         if len(param) == 11:
             param = ra, dec, pmra, pmdec, par, ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host
