@@ -489,7 +489,7 @@ class System():
             pmra = transform_uniform(pmra, self.mu_pmra-(10*self.sigma_pmra), self.mu_pmra+(10*self.sigma_pmra))
             pmdec = transform_uniform(pmdec, self.mu_pmdec-(10*self.sigma_pmdec), self.mu_pmdec+(10*self.sigma_pmdec))
         if self.relax_par_priors:
-            par = transform_uniform(param[4], 1e-2, self.mu_par)
+            par = transform_uniform(param[4], 1e-2, self.paro)
 
         if len(param) == 11:
             param = ra, dec, pmra, pmdec, par, ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host
