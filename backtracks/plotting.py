@@ -274,11 +274,11 @@ def trackplot(
     for i in range(len(backtracks.ras)):
         comp_ra = (backtracks.ras[i], ra_bg_best[i])
         comp_dec = (backtracks.decs[i], dec_bg_best[i])
-        axs['A'].plot(comp_ra, comp_dec, ls='--', color='darkred', lw=1.0)
+        axs['A'].plot(comp_ra, comp_dec, ls='--', color='tab:grey', lw=2.0)
 
     # Plot coordinates at observation epochs for best-fit parameters
 
-    axs['A'].plot(ra_bg_best, dec_bg_best, color="tomato", mec='darkred',
+    axs['A'].plot(ra_bg_best, dec_bg_best, color="none", mec='tab:grey',
                   ms=5., mew=1.5, linestyle="none", marker="o")
 
     # Plot data points (deltaRA, deltaDEC)
@@ -485,11 +485,11 @@ def stationtrackplot(
     for i in range(len(backtracks.ras)):
         comp_ra = (backtracks.ras[i], ra_bg_best[i])
         comp_dec = (backtracks.decs[i], dec_bg_best[i])
-        axs['A'].plot(comp_ra, comp_dec, ls='--', color='darkred', lw=1.0)
+        axs['A'].plot(comp_ra, comp_dec, ls='--', color='tab:grey', lw=2.0)
 
     # Plot coordinates at observation epochs for best-fit parameters
 
-    axs['A'].plot(ra_bg_best, dec_bg_best, color="tomato", mec='darkred',
+    axs['A'].plot(ra_bg_best, dec_bg_best, color="none", mec='tab:grey',
                   ms=5., mew=1.5, linestyle="none", marker="o")
 
     # Plot data points (deltaRA, deltaDEC)
