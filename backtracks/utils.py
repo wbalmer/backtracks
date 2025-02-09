@@ -240,6 +240,19 @@ def transform_gengamm(x, L=1.35e3, alpha=1, beta=2):
 
     return L*(gammaincinv((beta+1)/alpha,x)**(1/alpha))
 
+def iso2mjd(yrs):
+    """
+    This function converts iso times to Modified Julian Dates in UTC
+    
+    Args:
+        yrs (str): array with iso epochs (YYYYMMDD)
+
+    Returns:
+        Returns Modified Julian Dates in UTC. 
+    """
+
+    return Time(yrs,scale="utc", format='iso').mjd
+
 def utc2tt(jd_utc):
     """
     This function converts Julian Dates in UTC to Julian Dates in TT (Terrestrial Time)

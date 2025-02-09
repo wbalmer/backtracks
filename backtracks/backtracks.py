@@ -31,7 +31,7 @@ from novas.compat.eph_manager import ephem_open
 
 from schwimmbad import MPIPool
 
-from backtracks.utils import pol2car, transform_gengamm, transform_normal, transform_uniform, utc2tt, HostStarPriors, radecdists
+from backtracks.utils import pol2car, transform_gengamm, transform_normal, transform_uniform, iso2mjd, utc2tt, HostStarPriors, radecdists
 from backtracks.plotting import diagnostic, neighborhood, plx_prior, posterior, trackplot, stationtrackplot
 
 
@@ -98,7 +98,7 @@ class System():
         # planet candidate astrometry
         candidate = pd.read_csv(candidate_file)
 
-        astrometry = np.zeros((6, len(candidate))) # epoch, ra, dec, raerr, decerr, rho
+        astrometry = np.zeros((6, len(candidate))) # epoch, ra, dec, raerr, decerr, rho, quant_type
 
         for i,quant in enumerate(candidate['quant_type']):
             if quant=='radec':
@@ -115,6 +115,10 @@ class System():
 
                 if np.isnan(rho):
                     rho2 = np.nan
+            
+            if 'yy_epochs' in kwargs:
+                if kwargs['yy_epochs']:
+                    epoch = iso2mjd(epoch)
 
             astrometry[0, i] += epoch + 2400000.5  # MJD to JD
             astrometry[1, i] += ra
