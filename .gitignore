@@ -22,3 +22,5 @@ bgstar_emcee.py
 .pytest_cache/
 tests/test_changes.py
 tests/yses2*
+tests/sao206463*
+docs/*.csv

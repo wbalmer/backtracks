@@ -225,7 +225,7 @@ class System():
         self.stationary_chi2_red = -2.*self.stationary_loglike/((2*(len(self.epochs)-1))-self.ndim)
 
         jd_start, jd_end, number = ephem_open()
-        print('[BACKTRACK INFO]: Opened ephemeris file')
+        print('[BACKTRACKS INFO]: Opened ephemeris file')
         # if the novas_de405 package is installed this will load the ephemerids file,
         # this will handle nutation, precession, gravitational lensing by (and barycenter motion induced by?) solar system bodies, etc.
         # ephem_open("DE440.bin")
@@ -241,10 +241,10 @@ class System():
             self.host_cat = novas.make_cat_entry(star_name="host",catalog="HIP",star_num=1,ra=self.rao/15.,
                                              dec=self.deco,pm_ra=self.pmrao,pm_dec=self.pmdeco,
                                              parallax=self.paro,rad_vel=self.radvelo)
-            print('[BACKTRACK INFO]: made cat entry for host')
+            print('[BACKTRACKS INFO]: made cat entry for host')
             self.host_icrs = novas.transform_cat(option=1, incat=self.host_cat, date_incat=self.gaia_epoch,
                                              date_newcat=2000., newcat_id="HIP")
-            print('[BACKTRACK INFO]: transformed cat entry for host')
+            print('[BACKTRACKS INFO]: transformed cat entry for host')
 
         # this converts the Epoch from the Gaia ref_epoch (2016 for DR3) to 2000 following ICRS
 
@@ -254,7 +254,7 @@ class System():
         """
 
         # initial estimate for background star scenario (best guesses)
-        print(f'[BACKTRACK INFO]: Estimating candidate position if stationary in RA,Dec @ {self.gaia_epoch} from observation #'+str(self.ref_epoch_idx))
+        print(f'[BACKTRACKS INFO]: Estimating candidate position if stationary in RA,Dec @ {self.gaia_epoch} from observation #'+str(self.ref_epoch_idx))
         # we'll do a rough estimate using astropy, then minimize the distance between
         # the novas projection and the specified observation using scipy's BFGS with
         # RA,DEC @ Gaia epoch as free parameters.
@@ -318,14 +318,14 @@ class System():
 
         # resolve target in simbad
         target_result_table = Simbad.query_object(self.target_name)
-        print(f'[BACKTRACK INFO]: Resolved the target star \'{self.target_name}\' in Simbad!')
+        print(f'[BACKTRACKS INFO]: Resolved the target star \'{self.target_name}\' in Simbad!')
         # target_result_table.pprint()
         # get gaia ID from simbad
         gaia_id = None
         for target_id in Simbad.query_objectids(self.target_name)['ID']:
             if f'Gaia {self.gaia_release}' in target_id:
                 gaia_id = int(target_id.replace(f'Gaia {self.gaia_release}', ''))
-                print('[BACKTRACK INFO]: Resolved target\'s Gaia ID '
+                print('[BACKTRACKS INFO]: Resolved target\'s Gaia ID '
                       f'from Simbad, Gaia {self.gaia_release} {gaia_id}')
 
         if gaia_id is None:
@@ -345,7 +345,7 @@ class System():
         else:
             target_gaia = target_gaia[target_gaia['SOURCE_ID']==gaia_id]
         self.gaia_epoch = target_gaia['ref_epoch'][0]
-        print(f'[BACKTRACK INFO]: gathered Gaia {self.gaia_release} data for {self.target_name}')
+        print(f'[BACKTRACKS INFO]: gathered Gaia {self.gaia_release} data for {self.target_name}')
         print(f'   * Gaia source ID = {gaia_id}')
         print(f'   * Reference epoch = {self.gaia_epoch}')
         print(f'   * RA = {target_gaia["ra"][0]:.4f} deg')
@@ -362,8 +362,8 @@ class System():
         width = u.Quantity(nearby_window, u.deg)
         height = u.Quantity(nearby_window, u.deg)
         nearby = Gaia.query_object_async(coordinate=coord, width=width, height=height, columns=columns)
-        print(rf'[BACKTRACK INFO]: gathered {len(nearby)} Gaia objects from the {nearby_window} sq. deg. nearby {self.target_name}')
-        print('[BACKTRACK INFO]: Finished nearby background gaia statistics')
+        print(rf'[BACKTRACKS INFO]: gathered {len(nearby)} Gaia objects from the {nearby_window} sq. deg. nearby {self.target_name}')
+        print('[BACKTRACKS INFO]: Finished nearby background gaia statistics')
 
         # return table of nearby objects, target's gaia id, and table of target
         return nearby, gaia_id, target_gaia
@@ -392,7 +392,7 @@ class System():
         self.alpha = distance_prior_params['GGDalpha'].values[0]
         self.beta = distance_prior_params['GGDbeta'].values[0]
 
-        print(f'[BACKTRACK INFO]: Queried distance prior parameters, L={self.L:.2f}, alpha={self.alpha:.2f}, beta={self.beta:.2f}')
+        print(f'[BACKTRACKS INFO]: Queried distance prior parameters, L={self.L:.2f}, alpha={self.alpha:.2f}, beta={self.beta:.2f}')
 
     def fmodel(self, param):
         """
@@ -521,7 +521,7 @@ class System():
             results (object): samples of fit
         """
 
-        print('[BACKTRACK INFO]: Beginning sampling')
+        print('[BACKTRACKS INFO]: Beginning sampling')
         ndim = self.ndim
 
         if not mpi_pool:
@@ -652,7 +652,7 @@ class System():
         save_dict = {'med': self.run_median, 'quant': self.run_quant, 'results': self.results}
         target_label = self.target_name.replace(' ','_')
         file_name = f'{fileprefix}{target_label}_dynestyrun_results.pkl'
-        print('[BACKTRACK INFO]: Saving results to {}'.format(file_name))
+        print('[BACKTRACKS INFO]: Saving results to {}'.format(file_name))
         pickle.dump(save_dict, open(file_name, "wb"))
 
     def load_results(self, fileprefix: str = './'):
@@ -664,7 +664,7 @@ class System():
         """
         target_label = self.target_name.replace(' ', '_')
         file_name = f'{fileprefix}{target_label}_dynestyrun_results.pkl'
-        print('[BACKTRACK INFO]: Loading results from {}'.format(file_name))
+        print('[BACKTRACKS INFO]: Loading results from {}'.format(file_name))
         save_dict = pickle.load(open(file_name, "rb"))
         self.run_median = save_dict['med']
         self.run_quant = save_dict['quant']
@@ -701,7 +701,7 @@ class System():
             tuple of figures: data and model tracks, posterior cornerplot, dynesty summary, parallax prior, gaia neighbourhood
         """
 
-        print('[BACKTRACK INFO]: Generating Plots')
+        print('[BACKTRACKS INFO]: Generating Plots')
         ref_epoch = Time(self.ref_epoch, format='jd')
 
         fig_track = trackplot(
@@ -720,7 +720,7 @@ class System():
         fig_diag = diagnostic(self, fileprefix=fileprefix, filepost=filepost)
         fig_prior = plx_prior(self, fileprefix=fileprefix, filepost=filepost)
         fig_hood = neighborhood(self, fileprefix=fileprefix, filepost=filepost)
-        print('[BACKTRACK INFO]: Plots saved to {}'.format(fileprefix))
+        print('[BACKTRACKS INFO]: Plots saved to {}'.format(fileprefix))
         return fig_track, fig_post, fig_diag, fig_prior, fig_hood
 
     def generate_stationary_plot(
@@ -748,7 +748,7 @@ class System():
             fig_track (figure): Figure object corresponding to the saved plot.
         """
 
-        print('[BACKTRACK INFO]: Generating Stationary plot')
+        print('[BACKTRACKS INFO]: Generating Stationary plot')
         ref_epoch = Time(self.ref_epoch, format='jd')
 
         fig_track = stationtrackplot(
@@ -761,5 +761,5 @@ class System():
             fileprefix=fileprefix,
             filepost=filepost
         )
-        print('[BACKTRACK INFO]: Stationary plot saved to {}'.format(fileprefix))
+        print('[BACKTRACKS INFO]: Stationary plot saved to {}'.format(fileprefix))
         return fig_track
