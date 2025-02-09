@@ -3,7 +3,7 @@
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/wbalmer/backtracks/raw/main/docs/_static/backtracks-logo-dark.svg">
      <source media="(prefers-color-scheme: light)" srcset="https://github.com/wbalmer/backtracks/raw/main/docs/_static/backtracks-logo-light.svg">
-     <img alt="Shows an illustrated helix trailinb behind a planet with a question mark, lines are black in light mode and white in dark mode." src="https://github.com/wbalmer/backtracks/raw/main/docs/_static/backtracks-logo-light.svg">
+     <img alt="Shows an illustrated helix trailing behind a planet with a question mark, lines are black in light mode and white in dark mode." src="https://github.com/wbalmer/backtracks/raw/main/docs/_static/backtracks-logo-light.svg">
    </picture>
 
 backtracks
@@ -12,6 +12,9 @@ backtracks
 
 .. image:: https://img.shields.io/pypi/v/backtracks
    :target: https://pypi.python.org/pypi/backtracks
+
+.. image:: https://zenodo.org/badge/651267755.svg
+  :target: https://doi.org/10.5281/zenodo.14838369
 
 .. image:: https://github.com/wbalmer/backtracks/actions/workflows/main.yml/badge.svg
    :target: https://github.com/wbalmer/backtracks/actions
@@ -44,7 +47,7 @@ A `Jupyter notebook <https://backtracks.readthedocs.io/en/latest/tutorial.html>`
 Attribution
 -----------
 
-If you use `backtracks` in your published work, please cite our Astrophysics Source Code Library entry, https://ascl.net/code/v/3755, and/or provide a footnote/acknowledgement linking to our package. Thank you!
+If you use `backtracks` in your published work, please cite our Zenodo entry (button above, and `here <https://doi.org/10.5281/zenodo.14838370>`_), and provide a footnote/acknowledgement linking to our package. Thank you!
 
 
 Details

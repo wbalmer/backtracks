@@ -33,6 +33,11 @@ Tutorial
 
 A `Jupyter notebook <https://backtracks.readthedocs.io/en/latest/tutorial.html>`_ will show you how to use `backtracks` by reproducing the result in `Nielsen et al. (2017) <https://ui.adsabs.harvard.edu/abs/2017AJ....154..218N/abstract>`_ and `Wagner et al. (2022) <https://ui.adsabs.harvard.edu/abs/2022AJ....163...80W/abstract>`_ for the case of the former exoplanet candidate around HD 131339 A.
 
+Attribution
+-----------
+
+If you use `backtracks` in your published work, please cite our Zenodo entry (button above, and `here <https://doi.org/10.5281/zenodo.14838370>`_), and provide a footnote/acknowledgement linking to our package. Thank you!
+
 
 Details
 -------

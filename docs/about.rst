@@ -24,7 +24,7 @@ The code is written and developed by Gilles Otten (@gotten), William Balmer (@wb
 Attribution
 -----------
 
-If you use `backtracks` in your published work, please cite our Astrophysics Source Code Library entry, https://ascl.net/code/v/3755, and/or provide a footnote/acknowledgement linking to our package. Thank you!
+If you use `backtracks` in your published work, please cite our Zenodo entry (button above, and `here <https://doi.org/10.5281/zenodo.14838370>`_), and provide a footnote/acknowledgement linking to our package. Thank you!
 
 Details
 -------
