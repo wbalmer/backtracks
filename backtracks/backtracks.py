@@ -689,7 +689,8 @@ class System():
             fileprefix (str): Prefix to filename. Default "./" for current folder.
         """
         target_label = self.target_name.replace(' ', '_')
-        file_name = f'{fileprefix}{target_label}_dynestyrun_results.pkl'
+        object_label = f"cc{self.obj_num}"
+        file_name = f'{fileprefix}{target_label}_{object_label}_dynestyrun_results.pkl'
         print('[BACKTRACKS INFO]: Loading results from {}'.format(file_name))
         save_dict = pickle.load(open(file_name, "rb"))
         self.run_median = save_dict['med']
