@@ -65,6 +65,20 @@ class System():
         self.fileprefix = fileprefix
         self.ndim = ndim
 
+        # planet candidate astrometry
+        # input is formatted following orbitize!, epoch, object, ra, dec, raerr, decerr, rho, quant_type; see example csv files
+        candidate = pd.read_csv(candidate_file)
+
+        if 'obj_num' in kwargs:
+            # you may include multiple object numbers in the "orbitize-like" formatted input
+            # e.g. if you have multiple candidate sources in the field and put them in the save csv
+            self.obj_num = kwargs['obj_num']
+        else:
+            # assume object = 1
+            self.obj_num = 1
+        print(f'[BACKTRACKS INFO]: Examining object = {self.obj_num} in input file.')
+        candidate = candidate[candidate['object']==self.obj_num]
+
         if 'unif' in kwargs:
             self.unif = kwargs['unif']
         else:
@@ -98,9 +112,6 @@ class System():
                              f"({Gaia.MAIN_GAIA_TABLE}) is not valid.")
 
         self.gaia_epoch = None
-
-        # planet candidate astrometry
-        candidate = pd.read_csv(candidate_file)
 
         astrometry = np.zeros((6, len(candidate))) # epoch, ra, dec, raerr, decerr, rho, quant_type
 
@@ -665,7 +676,8 @@ class System():
 
         save_dict = {'med': self.run_median, 'quant': self.run_quant, 'results': self.results}
         target_label = self.target_name.replace(' ','_')
-        file_name = f'{fileprefix}{target_label}_dynestyrun_results.pkl'
+        object_label = f"cc{self.obj_num}"
+        file_name = f'{fileprefix}{target_label}_{object_label}_dynestyrun_results.pkl'
         print('[BACKTRACKS INFO]: Saving results to {}'.format(file_name))
         pickle.dump(save_dict, open(file_name, "wb"))
 
