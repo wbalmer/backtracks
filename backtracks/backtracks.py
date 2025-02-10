@@ -56,6 +56,7 @@ class System():
         **rv_host_params (tuple of floats): (lower_limit,upper_limit) for uniform rv_host_method, (mu,sigma) for normal rv_host_method. [km/s]
         **unif (float): Sets bounds for uniform prior around estimated candidate companion location. Defaults to 5e-3 if not defined. [degrees]
         **ref_epoch_idx (int): ID of datapoint at which to pin stationary tracks. Defaults to 0 if not defined. Follows order of candidate_file datapoints.
+        **query_file (str): Name of the FITS file with the Gaia query output. This file is created when running backtracks for the first time on a ``target_name``. Adding the filename will skip the query of the Gaia archive.
     """
 
     def __init__(self, target_name: str, candidate_file: str, nearby_window: float = 0.5, fileprefix = './', ndim = 11, **kwargs):
@@ -68,14 +69,17 @@ class System():
             self.unif = kwargs['unif']
         else:
             self.unif = 5e-3
+
         if 'relax_pm_priors' in kwargs:
             self.relax_pm_priors = kwargs['relax_pm_priors']
         else:
             self.relax_pm_priors = False
+
         if 'relax_par_priors' in kwargs:
             self.relax_par_priors = kwargs['relax_par_priors']
         else: 
             self.relax_par_priors = False
+
         if 'rv_host_method' in kwargs:
              if 'rv_host_params' not in kwargs:
                  raise Exception("'rv_host_method' is set. Please provide (mu,sigma) or (lower,upper) in km/s in 'rv_host_params'")
@@ -459,41 +463,51 @@ class System():
         param = np.array(u) # copy u
 
         if len(param) == 11:
+            # unpacking unit cube samples
             ra, dec, pmra, pmdec, par, ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host = param
 
+            # normal priors for host star
             ra_host, dec_host, pmra_host, pmdec_host, par_host = self.HostStarPriors.transform_normal_multivariate(np.c_[ra_host,dec_host,pmra_host,pmdec_host,par_host])
+
             if self.rv_host_method == 'uniform':
+                # uniform prior for RV
                 rv_host = transform_uniform(rv_host, self.rv_lower, self.rv_upper)
-            else: # rv_host_method == 'normal' or 'gaia'
+            else:
+                # normal prior for RV
+                # rv_host_method == 'normal' or 'gaia'
                 rv_host = transform_normal(rv_host, self.radvelo, self.sig_rv)
-            # truncate distribution at 100 kpc (Nielsen+ 2017 do this at 10 kpc)
-            par = 1000/transform_gengamm(par, self.L, self.alpha, self.beta) # [units of mas]
-            if par < 1e-2:
-                par = -np.inf
+
         elif len(param) == 5:
-            ra, dec, pmra, pmdec, par = param # unpacking unit cube samples
+            # unpacking unit cube samples
+            ra, dec, pmra, pmdec, par = param
 
-            # the PPF of Bailer-Jones 2015 eq. 17
-            par = 1000/transform_gengamm(par, self.L, self.alpha, self.beta) # [units of mas]
-
-            # truncate distribution at 100 kpc (Nielsen+ 2017 do this at 10 kpc)
-            if par < 1e-2:
-                par = -np.inf
         else:
+            # unpacking unit cube samples
             ra, dec, pmra, pmdec = param
+            par = None
 
         # uniform priors for RA and Dec
         ra = transform_uniform(ra, self.ra0-self.unif, self.ra0+self.unif)
         dec = transform_uniform(dec, self.dec0-self.unif, self.dec0+self.unif)
 
-        # normal priors for proper motion
-        pmra = transform_normal(pmra, self.mu_pmra, self.sigma_pmra)
-        pmdec = transform_normal(pmdec, self.mu_pmdec, self.sigma_pmdec)
         if self.relax_pm_priors:
+            # uniform priors for proper motion
             pmra = transform_uniform(pmra, self.mu_pmra-(10*self.sigma_pmra), self.mu_pmra+(10*self.sigma_pmra))
             pmdec = transform_uniform(pmdec, self.mu_pmdec-(10*self.sigma_pmdec), self.mu_pmdec+(10*self.sigma_pmdec))
+        else:
+            # normal priors for proper motion
+            pmra = transform_normal(pmra, self.mu_pmra, self.sigma_pmra)
+            pmdec = transform_normal(pmdec, self.mu_pmdec, self.sigma_pmdec)
+
         if self.relax_par_priors:
-            par = transform_uniform(param[4], 1e-2, self.paro)
+            par = transform_uniform(par, 1e-2, self.paro)
+        elif par is not None:
+            # ndim = 5 or ndim = 11
+            # the PPF of Bailer-Jones 2015 eq. 17
+            par = 1000/transform_gengamm(par, self.L, self.alpha, self.beta) # [units of mas]
+            # truncate distribution at 100 kpc (Nielsen+ 2017 do this at 10 kpc)
+            if par < 1e-2:
+                par = -np.inf
 
         if len(param) == 11:
             param = ra, dec, pmra, pmdec, par, ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host
