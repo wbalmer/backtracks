@@ -23,4 +23,4 @@ bgstar_emcee.py
 tests/test_changes.py
 tests/yses2*
 tests/sao206463*
-docs/*.csv
+docs/*.csv*

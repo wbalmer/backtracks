@@ -20,13 +20,13 @@ class TestBacktracks:
     def teardown_class(self) -> None:
 
         file_list = [
-            "HD_131399_A_bjprior_backtracks.png",
-            "HD_131399_A_corner_backtracks.png",
-            "HD_131399_A_evidence_backtracks.png",
-            "HD_131399_A_model_backtracks.png",
-            "HD_131399A_stationary_backtracks.png",
-            "HD_131399_A_nearby_gaia_distribution.png",
-            "HD_131399_A_dynestyrun_results.pkl",
+            "HD_131399_A_cc1_bjprior_backtracks.png",
+            "HD_131399_A_cc1_corner_backtracks.png",
+            "HD_131399_A_cc1_evidence_backtracks.png",
+            "HD_131399_A_cc1_model_backtracks.png",
+            "HD_131399_A_cc1_stationary_backtracks.png",
+            "HD_131399_A_cc1_nearby_gaia_distribution.png",
+            "HD_131399_A_cc1_dynestyrun_results.pkl",
             "gaia_query_6204835284262018688.fits",
             "dynesty.save"
         ]

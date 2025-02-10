@@ -57,7 +57,8 @@ def diagnostic(backtracks, fileprefix='./', filepost='.pdf'):
     fig, axes = dyplot.runplot(backtracks.results, color='cornflowerblue')
 
     target_name = backtracks.target_name.replace(' ','_')
-    plt.savefig(f'{fileprefix}{target_name}_evidence_backtracks'+filepost, dpi=300, bbox_inches='tight')
+    object_label = f"cc{backtracks.obj_num}"
+    plt.savefig(f'{fileprefix}{target_name}_{object_label}_evidence_backtracks'+filepost, dpi=300, bbox_inches='tight')
 
     return fig
 
@@ -86,7 +87,8 @@ def plx_prior(backtracks, fileprefix='./', filepost='.pdf'):
     plt.legend()
 
     target_name = backtracks.target_name.replace(' ', '_')
-    plt.savefig(f"{fileprefix}{target_name}_bjprior_backtracks"+filepost, dpi=300, bbox_inches='tight')
+    object_label = f"cc{backtracks.obj_num}"
+    plt.savefig(f"{fileprefix}{target_name}_{object_label}_bjprior_backtracks"+filepost, dpi=300, bbox_inches='tight')
 
     return fig
 
@@ -142,7 +144,8 @@ def posterior(backtracks, fileprefix='./', filepost='.pdf'):
     # ax[-1,-1].set_xlim(xmin=1e-2)
 
     target_name = backtracks.target_name.replace(' ', '_')
-    plt.savefig(f"{fileprefix}{target_name}_corner_backtracks"+filepost, dpi=300, bbox_inches='tight')
+    object_label = f"cc{backtracks.obj_num}"
+    plt.savefig(f"{fileprefix}{target_name}_{object_label}_corner_backtracks"+filepost, dpi=300, bbox_inches='tight')
 
     return fig
 
@@ -367,7 +370,8 @@ def trackplot(
     plt.tight_layout()
 
     target_name = backtracks.target_name.replace(' ', '_')
-    plt.savefig(f"{fileprefix}{target_name}_model_backtracks"+filepost, dpi=300, bbox_inches='tight')
+    object_label = f"cc{backtracks.obj_num}"
+    plt.savefig(f"{fileprefix}{target_name}_{object_label}_model_backtracks"+filepost, dpi=300, bbox_inches='tight')
 
     return fig
 
@@ -410,7 +414,8 @@ def neighborhood(backtracks, fileprefix='./', filepost='.pdf'):
                         levels=levels)
 
     target_name = backtracks.target_name.replace(' ', '_')
-    plt.savefig(f'{fileprefix}{target_name}_nearby_gaia_distribution'+filepost, dpi=300, bbox_inches='tight')
+    object_label = f"cc{backtracks.obj_num}"
+    plt.savefig(f'{fileprefix}{target_name}_{object_label}_nearby_gaia_distribution'+filepost, dpi=300, bbox_inches='tight')
 
     return fig
 
@@ -578,6 +583,7 @@ def stationtrackplot(
     plt.tight_layout()
 
     target_name = backtracks.target_name.replace(' ', '_')
-    plt.savefig(f"{fileprefix}{target_name}_stationary_backtracks"+filepost, dpi=300, bbox_inches='tight')
+    object_label = f"cc{backtracks.obj_num}"
+    plt.savefig(f"{fileprefix}{target_name}_{object_label}_stationary_backtracks"+filepost, dpi=300, bbox_inches='tight')
 
     return fig
