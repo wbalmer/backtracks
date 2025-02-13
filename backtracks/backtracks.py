@@ -164,7 +164,11 @@ class System():
                 target_gaia = Table(hdu_list[1].data, masked=True)
                 self.nearby = Table(hdu_list[2].data, masked=True)
 
-                self.gaia_id = target_gaia['SOURCE_ID'][0]
+                if 'source_id' in target_gaia.columns:
+                    self.gaia_id = target_gaia['source_id'][0]
+                else:
+                    self.gaia_id = target_gaia['SOURCE_ID'][0]
+
                 self.gaia_epoch = target_gaia['ref_epoch'][0]
 
                 for col in target_gaia.columns.values():
@@ -332,14 +336,15 @@ class System():
         """
 
         # resolve target in simbad
-        target_result_table = Simbad.query_object(self.target_name)
+        Simbad.add_votable_fields("ids")
+        simbad_query = Simbad.query_object(self.target_name)
         print(f'[BACKTRACKS INFO]: Resolved the target star \'{self.target_name}\' in Simbad!')
-        # target_result_table.pprint()
-        # get gaia ID from simbad
+
+        # get Gaia source ID
         gaia_id = None
-        for target_id in Simbad.query_objectids(self.target_name)['ID']:
-            if f'Gaia {self.gaia_release}' in target_id:
-                gaia_id = int(target_id.replace(f'Gaia {self.gaia_release}', ''))
+        for id_name in simbad_query['ids'][0].split('|'):
+            if f'Gaia {self.gaia_release}' in id_name:
+                gaia_id = int(id_name.replace(f'Gaia {self.gaia_release}', ''))
                 print('[BACKTRACKS INFO]: Resolved target\'s Gaia ID '
                       f'from Simbad, Gaia {self.gaia_release} {gaia_id}')
 
@@ -348,18 +353,63 @@ class System():
                              f"is not found in the selected catalog "
                              f"({Gaia.MAIN_GAIA_TABLE}).")
 
-        coord = SkyCoord(ra=target_result_table['RA'][0],
-                         dec=target_result_table['DEC'][0],
-                         unit=(u.hourangle, u.degree), frame='icrs')
-        width = u.Quantity(50, u.arcsec)
-        height = u.Quantity(50, u.arcsec)
-        columns = ['source_id', 'SOURCE_ID', 'ra', 'dec', 'pmra', 'pmdec', 'parallax', 'radial_velocity', 'ref_epoch','ra_error','dec_error','parallax_error','pmra_error','pmdec_error','radial_velocity_error','ra_dec_corr','ra_parallax_corr','ra_pmra_corr','ra_pmdec_corr','dec_parallax_corr','dec_pmra_corr','dec_pmdec_corr','parallax_pmra_corr','parallax_pmdec_corr','pmra_pmdec_corr']
-        target_gaia = Gaia.query_object_async(coordinate=coord, width=width, height=height, columns=columns)
-        if 'source_id' in target_gaia.columns:
-            target_gaia = target_gaia[target_gaia['source_id']==gaia_id]
+        # target coordinates
+        if 'RA' in simbad_query.columns:
+            coord = SkyCoord(ra=simbad_query['RA'][0],
+                             dec=simbad_query['DEC'][0],
+                             unit=(u.hourangle, u.degree), frame='icrs')
         else:
-            target_gaia = target_gaia[target_gaia['SOURCE_ID']==gaia_id]
-        self.gaia_epoch = target_gaia['ref_epoch'][0]
+            coord = SkyCoord(ra=simbad_query['ra'][0],
+                             dec=simbad_query['dec'][0],
+                             unit=(u.hourangle, u.degree), frame='icrs')
+
+        columns = [
+            'source_id',
+            'ra',
+            'dec',
+            'pmra',
+            'pmdec',
+            'parallax',
+            'radial_velocity',
+            'ref_epoch',
+            'ra_error',
+            'dec_error',
+            'parallax_error',
+            'pmra_error',
+            'pmdec_error',
+            'radial_velocity_error',
+            'ra_dec_corr',
+            'ra_parallax_corr',
+            'ra_pmra_corr',
+            'ra_pmdec_corr',
+            'dec_parallax_corr',
+            'dec_pmra_corr',
+            'dec_pmdec_corr',
+            'parallax_pmra_corr',
+            'parallax_pmdec_corr',
+            'pmra_pmdec_corr'
+        ]
+
+        col_str = ''
+        for i, item in enumerate(columns):
+            if i != 0:
+                col_str += ','
+            col_str += item
+
+        # query target in Gaia
+        gaia_query = f"""
+        SELECT {col_str}
+        FROM gaia{self.gaia_release.lower()}.gaia_source
+        WHERE source_id = {gaia_id}
+        """
+        gaia_job = Gaia.launch_job_async(gaia_query, dump_to_file=False, verbose=False)
+        target_gaia = gaia_job.get_results()
+
+        if 'REF_EPOCH' in target_gaia.columns:
+            self.gaia_epoch = target_gaia['REF_EPOCH'][0]
+        else:
+            self.gaia_epoch = target_gaia['ref_epoch'][0]
+
         print(f'[BACKTRACKS INFO]: gathered Gaia {self.gaia_release} data for {self.target_name}')
         print(f'   * Gaia source ID = {gaia_id}')
         print(f'   * Reference epoch = {self.gaia_epoch}')
@@ -368,8 +418,8 @@ class System():
         print(f'   * PM RA = {target_gaia["pmra"][0]:.2f} mas/yr')
         print(f'   * PM Dec = {target_gaia["pmdec"][0]:.2f} mas/yr')
         print(f'   * Parallax = {target_gaia["parallax"][0]:.2f} mas')
-        if isinstance(target_gaia["radial_velocity"][0], np.ma.core.MaskedConstant):
-            print(f'   * RV = --') # this addresses the FutureWarning: Format strings passed to MaskedConstant are ignored, but in future may error or produce different behavior
+        if np.ma.is_masked(target_gaia["radial_velocity"][0]):
+            print(f'   * RV = --')
         else:
             print(f'   * RV = {target_gaia["radial_velocity"][0]:.2f} km/s')
 
@@ -492,6 +542,13 @@ class System():
             # unpacking unit cube samples
             ra, dec, pmra, pmdec, par = param
 
+        elif len(param) == 2:
+            # unpacking unit cube samples
+            ra, dec = param
+            pmra = None
+            pmdec = None
+            par = None
+
         else:
             # unpacking unit cube samples
             ra, dec, pmra, pmdec = param
@@ -505,7 +562,7 @@ class System():
             # uniform priors for proper motion
             pmra = transform_uniform(pmra, self.mu_pmra-(10*self.sigma_pmra), self.mu_pmra+(10*self.sigma_pmra))
             pmdec = transform_uniform(pmdec, self.mu_pmdec-(10*self.sigma_pmdec), self.mu_pmdec+(10*self.sigma_pmdec))
-        else:
+        elif pmra is not None:
             # normal priors for proper motion
             pmra = transform_normal(pmra, self.mu_pmra, self.sigma_pmra)
             pmdec = transform_normal(pmdec, self.mu_pmdec, self.sigma_pmdec)
@@ -524,8 +581,10 @@ class System():
             param = ra, dec, pmra, pmdec, par, ra_host, dec_host, pmra_host, pmdec_host, par_host, rv_host
         elif len(param) == 5:
             param = ra, dec, pmra, pmdec, par
-        else:
+        elif len(param) == 4:
             param = ra, dec, pmra, pmdec
+        else:
+            param = ra, dec
 
         return param
 

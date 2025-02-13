@@ -112,9 +112,17 @@ def posterior(backtracks, fileprefix='./', filepost='.pdf'):
     labels = ["RA (deg, ep=2016)", "DEC (deg, ep=2016)", "pmra (mas/yr)", "pmdec (mas/yr)", "parallax (mas)"]
     levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2) # 1,2,3 sigma levels for a 2d gaussian
     # plot extended run (right)
+    if backtracks.results.samples.shape[1] == 2:
+        labels = labels[:2]
+        dims = range(2)
+    elif backtracks.results.samples.shape[1] == 4:
+        labels = labels[:4]
+        dims = range(4)
+    else:
+        dims = range(5)
     fig, ax = dyplot.cornerplot(backtracks.results,
                                color='cornflowerblue',
-                               dims=range(5),
+                               dims=dims,
                                # truths=np.zeros(ndim),
                                # span=[(-4.5, 4.5) for i in range(ndim)],
                                labels=labels,
@@ -140,7 +148,7 @@ def posterior(backtracks, fileprefix='./', filepost='.pdf'):
             axis.set(xlabel=None, ylabel=None)
     for axis_col in ax[:,-1]:
         axis_col.xaxis.set_major_formatter(tick_formatter)
-    ax[-1,-1].set_xscale('log')
+    # ax[-1,-1].set_xscale('log')
     # ax[-1,-1].set_xlim(xmin=1e-2)
 
     target_name = backtracks.target_name.replace(' ', '_')
@@ -397,6 +405,10 @@ def neighborhood(backtracks, fileprefix='./', filepost='.pdf'):
     nearby_table['parallax'] = backtracks.nearby['parallax'].data
 
     truths = backtracks.run_median[2:5]
+    if len(truths) == 0:
+        truths = np.array([0., 0., 0.])
+    elif len(truths) == 2:
+        truths = np.append(truths, 0.)
 
     # 1,2,3 sigma levels for a 2d gaussian
     levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2)
