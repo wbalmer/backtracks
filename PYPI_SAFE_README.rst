@@ -8,6 +8,9 @@ backtracks
 .. image:: https://img.shields.io/pypi/v/backtracks
    :target: https://pypi.python.org/pypi/backtracks
 
+.. image:: https://zenodo.org/badge/651267755.svg
+  :target: https://doi.org/10.5281/zenodo.14838369
+
 .. image:: https://github.com/wbalmer/backtracks/actions/workflows/main.yml/badge.svg
    :target: https://github.com/wbalmer/backtracks/actions
 
