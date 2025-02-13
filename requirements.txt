@@ -1,5 +1,5 @@
 astropy
-astroquery
+astroquery>=0.4.9
 corner
 dynesty
 matplotlib
