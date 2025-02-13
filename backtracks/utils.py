@@ -37,7 +37,13 @@ def radecdists(backtracks, days, param): # for multiple epochs
 
         jd_start, jd_end, number = ephem_open() # can't we do this in the System class?
 
-        if len(param) == 4:
+        if len(param) == 2:
+            ra, dec = param
+            par = 0.0
+            pmra = 0.0
+            pmdec = 0.0
+            host_icrs=backtracks.host_icrs
+        elif len(param) == 4:
             ra, dec, pmra, pmdec = param
             par=0
             host_icrs=backtracks.host_icrs
