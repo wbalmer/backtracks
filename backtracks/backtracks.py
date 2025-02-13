@@ -569,7 +569,6 @@ class System():
 
         if self.relax_par_priors:
             par = transform_uniform(par, 1e-2, self.paro)
-            # par = transform_uniform(par, 0., 2.)
         elif par is not None:
             # ndim = 5 or ndim = 11
             # the PPF of Bailer-Jones 2015 eq. 17
