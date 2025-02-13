@@ -42,3 +42,8 @@ jobs:
       - name: Run pytest
         run: |
           pytest
+
+      - name: Run pytest, old astroquery
+        run: |
+          pip install astroquery==0.4.6
+          pytest
