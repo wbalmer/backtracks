@@ -342,7 +342,11 @@ class System():
 
         # get Gaia source ID
         gaia_id = None
-        for id_name in simbad_query['ids'][0].split('|'):
+        if "ids" in simbad_query.columns:
+            target_ids = simbad_query['ids'][0].split('|')
+        else:
+            target_ids = simbad_query['IDS'][0].split('|')
+        for id_name in target_ids:
             if f'Gaia {self.gaia_release}' in id_name:
                 gaia_id = int(id_name.replace(f'Gaia {self.gaia_release}', ''))
                 print('[BACKTRACKS INFO]: Resolved target\'s Gaia ID '
