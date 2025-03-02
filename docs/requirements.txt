@@ -1,7 +1,7 @@
 jupyter
 nbsphinx
 pandoc
-sphinx==8.1.3
+sphinx==7.4
 sphinx-automodapi
 sphinx_book_theme
 sphinx-readable-theme
