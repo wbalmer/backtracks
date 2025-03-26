@@ -422,7 +422,7 @@ def neighborhood(backtracks, fileprefix='./', filepost='.pdf'):
                         labels=["pmra (mas/yr)", "pmdec (mas/yr)", "parallax (mas)"],
                         smooth=1,
                         smooth_1d=1,
-                        quantiles=[0.003, 0.997],
+                        quantiles=[0.00135, 0.99865],
                         levels=levels)
 
     target_name = backtracks.target_name.replace(' ', '_')
