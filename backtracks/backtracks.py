@@ -475,6 +475,43 @@ class System():
         """
         return radecdists(self, self.epochs_tt, param)
 
+    def calc_chisq(self, param):
+        """
+        Function to calculate the chi2 for correlated (e.g., GRAVITY) and uncorrelated datapoints given certain model parameters.
+
+        Args:
+            param (np.array of float): set of parameters describing 5D position of background star and 6D position of host star.
+
+        Returns:
+            Total chi2 given the observed datapoints and a set of model parameters.
+        """
+
+        if not np.isfinite(np.sum(param)):
+            # if nan or inf, avoid calling fmodel
+            return -np.inf
+
+        xs, ys = self.fmodel(param)
+
+        # separate terms where there is a correlation
+        corr_terms = ~np.isnan(self.rho)
+
+        chi_sq = 0.0
+
+        if np.sum(~corr_terms) > 0:
+            # calculate chi2 for uncorrelated terms
+            chi_sq += np.sum((self.ras[~corr_terms] - xs[~corr_terms])**2 / self.raserr[~corr_terms]**2)
+            chi_sq += np.sum((self.decs[~corr_terms] - ys[~corr_terms])**2 / self.decserr[~corr_terms]**2)
+
+        if np.sum(corr_terms) > 0:
+            # calculate the chi2 for correlated terms
+            # following equations with correlation terms taken from orbitize! routine
+            # _chi2_2x2cov (https://orbitize.readthedocs.io/en/latest/modules/orbitize/lnlike.html)
+            det_C = (self.raserr[corr_terms]**2)*(self.decserr[corr_terms]**2)*(1-self.rho[corr_terms]**2)
+            covs = self.rho[corr_terms]*self.raserr[corr_terms]*self.decserr[corr_terms]
+            chi_sq += np.sum(((self.ras[corr_terms]-xs[corr_terms])**2*self.decserr[corr_terms]**2+(self.decs[corr_terms]-ys[corr_terms])**2*self.raserr[corr_terms]**2-2*(self.ras[corr_terms]-xs[corr_terms])*(self.decs[corr_terms]-ys[corr_terms])*covs)/det_C)
+
+        return chi_sq
+
     def loglike(self, param):
         """
         Function to calculate Log likelihood for correlated (e.g., GRAVITY) and uncorrelated datapoints given certain model parameters.
@@ -725,7 +762,7 @@ class System():
 
         # Compute useful chi2 value
         self.median_loglike = self.loglike(self.run_median)
-        self.median_chi2_red = -2.*self.median_loglike/((2*len(self.epochs))-self.ndim)
+        self.median_chi2_red = self.calc_chisq(self.run_median)/((2*len(self.epochs))-self.ndim)
 
         return self.results
 
@@ -762,7 +799,7 @@ class System():
 
         # recompute useful chi2 value
         self.median_loglike = self.loglike(self.run_median)
-        self.median_chi2_red = -2.*self.median_loglike/((2*len(self.epochs))-self.ndim)
+        self.median_chi2_red = self.calc_chisq(self.run_median)/((2*len(self.epochs))-self.ndim)
 
     def generate_plots(
             self,
