@@ -499,8 +499,8 @@ class System():
 
         if np.sum(~corr_terms) > 0:
             # calculate chi2 for uncorrelated terms
-            chi_sq += np.sum((self.ras[~corr_terms] - xs[~corr_terms])**2 / self.raserr[~corr_terms]**2
-            chi_sq += np.sum((self.decs[~corr_terms] - ys[~corr_terms])**2 / self.decserr[~corr_terms]**2
+            chi_sq += np.sum((self.ras[~corr_terms] - xs[~corr_terms])**2 / self.raserr[~corr_terms]**2)
+            chi_sq += np.sum((self.decs[~corr_terms] - ys[~corr_terms])**2 / self.decserr[~corr_terms]**2)
 
         if np.sum(corr_terms) > 0:
             # calculate the chi2 for correlated terms
