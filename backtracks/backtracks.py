@@ -508,7 +508,7 @@ class System():
             # _chi2_2x2cov (https://orbitize.readthedocs.io/en/latest/modules/orbitize/lnlike.html)
             det_C = (self.raserr[corr_terms]**2)*(self.decserr[corr_terms]**2)*(1-self.rho[corr_terms]**2)
             covs = self.rho[corr_terms]*self.raserr[corr_terms]*self.decserr[corr_terms]
-            chi_sq += np.sum((self.ras[corr_terms]-xs[corr_terms])**2*self.decserr[corr_terms]**2+(self.decs[corr_terms]-ys[corr_terms])**2*self.raserr[corr_terms]**2-2*(self.ras[corr_terms]-xs[corr_terms])*(self.decs[corr_terms]-ys[corr_terms])*covs)/det_C)
+            chi_sq += np.sum(((self.ras[corr_terms]-xs[corr_terms])**2*self.decserr[corr_terms]**2+(self.decs[corr_terms]-ys[corr_terms])**2*self.raserr[corr_terms]**2-2*(self.ras[corr_terms]-xs[corr_terms])*(self.decs[corr_terms]-ys[corr_terms])*covs)/det_C)
 
         return chi_sq
 
