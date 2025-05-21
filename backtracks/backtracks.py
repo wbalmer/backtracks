@@ -799,7 +799,7 @@ class System():
 
         # recompute useful chi2 value
         self.median_loglike = self.loglike(self.run_median)
-        self.median_chi2_red = self.calc_chi2(self.run_median)/((2*len(self.epochs))-self.ndim)
+        self.median_chi2_red = self.calc_chisq(self.run_median)/((2*len(self.epochs))-self.ndim)
 
     def generate_plots(
             self,
