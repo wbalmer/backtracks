@@ -649,7 +649,7 @@ class System():
         print('[BACKTRACKS INFO]: Beginning sampling')
         ndim = self.ndim
 
-        if not mpi_pool:
+        if mpi_pool:
             with dynesty.pool.Pool(npool, self.loglike, self.prior_transform) as pool:
                 if dynamic:
                     if resume:
