@@ -241,7 +241,8 @@ class System():
         self.stationary_params = [self.ra0, self.dec0, 0, 0, 0, self.rao, self.deco, self.pmrao, self.pmdeco, self.paro, self.radvelo]
         # Compute useful chi2 value
         self.stationary_loglike = self.loglike(self.stationary_params)
-        self.stationary_chi2_red = -2.*self.stationary_loglike/((2*(len(self.epochs)-1))-self.ndim)
+        self.stationary_chi2=self.calc_chisq(self.stationary_params)
+        self.stationary_chi2_red = self.stationary_chi2/((2*(len(self.epochs)-1))-self.ndim)
 
         jd_start, jd_end, number = ephem_open()
         print('[BACKTRACKS INFO]: Opened ephemeris file')
