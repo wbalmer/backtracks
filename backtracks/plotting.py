@@ -9,6 +9,7 @@ import seaborn as sb
 from astropy.time import Time
 from dynesty import plotting as dyplot
 from matplotlib.ticker import FuncFormatter
+from scipy.stats import norm
 
 from backtracks.utils import transform_gengamm, radec2seppa, seppa2radec, transform_errors, utc2tt, radecdists
 
@@ -213,7 +214,7 @@ def trackplot(
 
         ra_stat, dec_stat = radecdists(backtracks, plot_epochs_tt, stat_pars)
         axs['A'].plot(ra_stat, dec_stat, color="lightgray", ls='--',
-                      label="Stationary track, $\chi^2_r={}$".format(round(backtracks.stationary_chi2_red,2)))
+                      label=rf"Stationary track, $\chi^2_r={backtracks.stationary_chi2_red:.2f}$")
 
         if plot_radec:
             axs['B'].plot(plot_times.decimalyear, ra_stat, color="lightgray", ls='--')
@@ -267,7 +268,7 @@ def trackplot(
 
     ra_bg, dec_bg = radecdists(backtracks, plot_epochs_tt, backtracks.run_median)
 
-    axs['A'].plot(ra_bg, dec_bg, color="black", label="Median track, $\chi^2_r={}$".format(round(backtracks.median_chi2_red,2)))
+    axs['A'].plot(ra_bg, dec_bg, color="black", label=fr"Median track, $\chi^2_r={backtracks.median_chi2_red:.2f}$")
 
     if plot_radec:
         axs['B'].plot(plot_times.decimalyear, ra_bg, color='black')
@@ -410,20 +411,45 @@ def neighborhood(backtracks, fileprefix='./', filepost='.pdf'):
     elif len(truths) == 2:
         truths = np.append(truths, 0.)
 
-    # 1,2,3 sigma levels for a 2d gaussian
-    levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2)
-
     nearby_array = nearby_table.to_numpy()
     nan_idx = np.isnan(nearby_array).any(axis=1)
+
+    # Quantiles for the 1D distributions (-1, 1 sigma)
+    quantiles = [norm.cdf(n_sigma) for n_sigma in [-1, 1]]
+
+    # Quantiles for the titles (-1, 0, 1 sigma)
+    title_quantiles = [norm.cdf(n_sigma) for n_sigma in [-1, 0, 1]]
+
+    # Credible regions for the 2D distributions (1, 2 sigma)
+    # Radial integral of the Gaussian probability
+    levels = [1.0 - np.exp(-0.5 * n_sigma ** 2) for n_sigma in [1, 2]]
+
+    # Exclude 1% of the outliers from the posterior plot for clarity
+    range_select = np.full(nearby_table.shape[1], 0.99)
+
+    titles = [r"$\mu_\alpha \cos\delta$", r"$\mu_\delta$", r"$\pi$"]
+    labels = [r"$\mu_\alpha \cos\delta$ (mas/yr)", r"$\mu_\delta$ (mas/yr)", r"$\pi$ (mas)"]
 
     fig = corner.corner(nearby_array[~nan_idx, ],
                         truths=truths,
                         truth_color='cornflowerblue',
-                        labels=["pmra (mas/yr)", "pmdec (mas/yr)", "parallax (mas)"],
-                        smooth=1,
-                        smooth_1d=1,
-                        quantiles=[0.00135, 0.99865],
-                        levels=levels)
+                        labels=labels,
+                        titles=titles,
+                        title_quantiles=title_quantiles,
+                        title_fmt=".1f",
+                        show_titles=True,
+                        smooth=None,
+                        smooth_1d=None,
+                        quantiles=quantiles,
+                        levels=levels,
+                        range=range_select,
+                        labelpad=-0.08)
+
+    for ax in fig.axes:
+        ax.title.set_fontsize(14.)
+        ax.xaxis.label.set_fontsize(15.)
+        ax.yaxis.label.set_fontsize(15.)
+        ax.tick_params(axis='both', labelsize=13.)
 
     target_name = backtracks.target_name.replace(' ', '_')
     object_label = f"cc{backtracks.obj_num}"
@@ -485,7 +511,7 @@ def stationtrackplot(
 
     ra_stat, dec_stat = radecdists(backtracks, plot_epochs_tt, stat_pars)
     axs['A'].plot(ra_stat, dec_stat, color="lightgray", ls='--',
-                    label="Stationary track, $\chi^2_r={}$".format(round(backtracks.stationary_chi2_red,2)))
+                    label=fr"Stationary track, $\chi^2_r={backtracks.stationary_chi2_red:.2f}$")
 
     if plot_radec:
         axs['B'].plot(plot_times.decimalyear, ra_stat, color="lightgray", ls='--')
