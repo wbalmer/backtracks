@@ -49,6 +49,7 @@ Attribution
 
 If you use `backtracks` in your published work, please cite our Zenodo entry (`here <https://doi.org/10.5281/zenodo.14838370>`_), and provide a footnote/acknowledgement linking to our package. An example bibtex citation is included below, but you may wish to cite a specific version of the package via zenodo instead. Thank you!
 
+```
 @software{backtracks_code,
   author       = {William O. Balmer and
                   Gilles P. P. L. Otten and
@@ -61,6 +62,7 @@ If you use `backtracks` in your published work, please cite our Zenodo entry (`h
   doi          = {10.5281/zenodo.14838369},
   url          = {https://doi.org/10.5281/zenodo.14838369},
 }
+```
 
 Details
 -------
