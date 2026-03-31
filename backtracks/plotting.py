@@ -365,7 +365,11 @@ def trackplot(
     axs['A'].axis('equal')
     axs['A'].set_xlabel("Delta RA (mas)")
     axs['A'].set_ylabel("Delta DEC (mas)")
-    axs['A'].legend()
+    # axs['A'].legend() 
+    # instead of plotting legend by default
+    # let's just print chi2 until we sort it out
+    print(f"[BACKTRACKS INFO]: Stationary track reduced chi squared is {backtracks.stationary_chi2_red:.2f}")
+    print(f"[BACKTRACKS INFO]: Median track reduced chi squared is {backtracks.median_chi2_red:.2f}")
     axs['B'].set_xlabel('Date (year)')
     axs['C'].set_xlabel('Date (year)')
 
@@ -511,7 +515,8 @@ def stationtrackplot(
 
     ra_stat, dec_stat = radecdists(backtracks, plot_epochs_tt, stat_pars)
     axs['A'].plot(ra_stat, dec_stat, color="lightgray", ls='--',
-                    label=fr"Stationary track, $\chi^2_r={backtracks.stationary_chi2_red:.2f}$")
+                    label=fr"Stationary track, $\chi^2_r={backtracks.stationary_chi2_red:.2f}$"
+                    )
 
     if plot_radec:
         axs['B'].plot(plot_times.decimalyear, ra_stat, color="lightgray", ls='--')
@@ -540,7 +545,8 @@ def stationtrackplot(
     axs['A'].errorbar(backtracks.ras, backtracks.decs,
                       yerr=backtracks.decserr, xerr=backtracks.raserr,
                       color="tomato", ecolor='darkred', mec='darkred',
-                      label="Data", linestyle="none", marker="o", ms=5., mew=1.5)
+                      label="Data", 
+                      linestyle="none", marker="o", ms=5., mew=1.5)
 
     # Plot deltaRA/deltaDec or sep/PA as function of date
 
@@ -607,7 +613,8 @@ def stationtrackplot(
     axs['A'].axis('equal')
     axs['A'].set_xlabel("Delta RA (mas)")
     axs['A'].set_ylabel("Delta DEC (mas)")
-    axs['A'].legend()
+    # axs['A'].legend()
+    print(f"[BACKTRACKS INFO]: Stationary track reduced chi squared is {backtracks.stationary_chi2_red:.2f}")
     axs['B'].set_xlabel('Date (year)')
     axs['C'].set_xlabel('Date (year)')
 
