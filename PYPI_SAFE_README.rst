@@ -39,11 +39,28 @@ A `Jupyter notebook <https://backtracks.readthedocs.io/en/latest/tutorial.html>`
 Attribution
 -----------
 
-If you use `backtracks` in your published work, please cite our Zenodo entry (button above, and `here <https://doi.org/10.5281/zenodo.14838370>`_), and provide a footnote/acknowledgement linking to our package. Thank you!
+If you use `backtracks` in your published work, please cite our Zenodo entry (`here <https://doi.org/10.5281/zenodo.14838370>`_), and provide a footnote/acknowledgement linking to our package. An example bibtex citation is included below, but you may wish to cite a specific version of the package via zenodo instead. Thank you!
+
+:: 
+
+   @software{backtracks_code,
+        author       = {William O. Balmer and
+                        Gilles P. P. L. Otten and
+                        Tomas Stolker},
+        title        = {backtracks: a python package to compare relative astrometry with background helical motion: v0.6},
+        month        = feb,
+        year         = 2025,
+        publisher    = {Zenodo},
+        version      = {v0.6},
+        doi          = {10.5281/zenodo.14838369},
+        url          = {https://doi.org/10.5281/zenodo.14838369},
+      }
 
 
 Details
 -------
+
+* High precision relative astrometry calculations with USNO's `NOVAS` via the `python implementation<https://pypi.org/project/novas/>`. Thanks to Brandon Rhodes for maintaining this python package.
 
 * eDR3 Distance prior summary file from `Bailer-Jones et al. (2021) <https://ui.adsabs.harvard.edu/abs/2021AJ....161..147B/abstract>`_.
 

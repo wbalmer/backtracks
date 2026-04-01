@@ -67,6 +67,8 @@ If you use `backtracks` in your published work, please cite our Zenodo entry (`h
 Details
 -------
 
+* High precision relative astrometry calculations with USNO's `NOVAS` via the `python implementation<https://pypi.org/project/novas/>`. Thanks to Brandon Rhodes for maintaining this python package.
+
 * eDR3 Distance prior summary file from `Bailer-Jones et al. (2021) <https://ui.adsabs.harvard.edu/abs/2021AJ....161..147B/abstract>`_.
 
 * Example of HD 131399Ab uses data from `Wagner et al. (2022) <https://ui.adsabs.harvard.edu/abs/2022AJ....163...80W/abstract>`_ and `Nielsen et al. (2017) <https://ui.adsabs.harvard.edu/abs/2017AJ....154..218N/abstract>`_. Thank you to Kevin Wagner for providing the latest astrometry!
